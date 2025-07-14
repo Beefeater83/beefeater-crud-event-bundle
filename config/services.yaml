@@ -1,0 +1,33 @@
+
+parameters:
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    Beefeater\CrudEventBundle\:
+        resource: '../src/*'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Model/'
+            - '../src/Repository/'
+            - '../src/Form/'
+            - '../../Tests/'
+
+    Beefeater\CrudEventBundle\ArgumentResolver\PageArgumentResolver:
+        tags: ['controller.argument_value_resolver']
+
+    Beefeater\CrudEventBundle\ArgumentResolver\SortArgumentResolver:
+        tags: ['controller.argument_value_resolver']
+
+    Beefeater\CrudEventBundle\ArgumentResolver\FilterArgumentResolver:
+        tags: ['controller.argument_value_resolver']
+
+    Beefeater\CrudEventBundle\Routing\CrudRouteLoader:
+        arguments:
+            $params: '@parameter_bag'
+        tags:
+            - { name: routing.loader }
