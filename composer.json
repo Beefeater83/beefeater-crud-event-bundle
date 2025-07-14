@@ -30,7 +30,7 @@
     "symfony/routing": "^7.2",
     "symfony/yaml": "^7.2",
     "symfony/dependency-injection": "^7.2",
-    "doctrine/orm": "^2.20",
+    "doctrine/orm": "^3.0",
     "doctrine/doctrine-bundle": "^2.10",
     "doctrine/persistence": "^3.3"
   },
