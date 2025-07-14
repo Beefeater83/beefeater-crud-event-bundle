@@ -29,6 +29,6 @@
   },
   "scripts": {
     "tests": "phpunit",
-    "cs": "phpcs --standard=PSR12 src tests"
+    "cs": "phpcs --standard=PSR12 src Tests"
   }
 }
