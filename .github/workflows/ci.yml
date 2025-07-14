@@ -1,0 +1,39 @@
+name: Master-CI
+
+on:
+    push:
+        branches: [master]
+
+env:
+    DATABASE_URL: localhost
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      -
+        name: safe directory
+        run: git config --global --add safe.directory /app
+      -
+        name: Cache Composer dependencies between workflows
+        uses: actions/cache@v3
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('composer.lock') }}
+      -
+        name: Install dependencies
+        uses: php-actions/composer@v6
+        with:
+          working_dir: .
+          #php_extensions: gd
+          args: --ignore-platform-req=ext-gd # Try to ignore, since it is expensive to build
+      -
+        name: run tests
+        working-directory: .
+        run: composer tests
+      -
+        name: checkstyle
+        working-directory: .
+        run: composer cs
