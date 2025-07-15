@@ -23,7 +23,7 @@
 
 
 
-Then install the bundle via Composer:
+Install the bundle via Composer:
 
 ```bash
 composer require beefeater/crud-event-bundle
