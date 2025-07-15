@@ -1,4 +1,5 @@
 # Beefeater CRUD Event Bundle
+![Build Status](https://github.com/Beefeater83/beefeater-crud-event-bundle/actions/workflows/ci.yml/badge.svg)
 
 **Beefeater CRUD Event Bundle** is a powerful Symfony bundle for rapid REST API generation with built-in support for CRUD operations, events, pagination, sorting, and filtering.
 
@@ -20,16 +21,7 @@
 
 ## 🔧 Installation
 
-Add the repository to your `composer.json`:
 
-```json
-"repositories": [
-  {
-    "type": "git",
-    "url": "https://github.com/Beefeater83/beefeater-crud-event-bundle.git"
-  }
-]
-```
 
 Then install the bundle via Composer:
 
