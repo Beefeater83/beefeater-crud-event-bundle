@@ -22,15 +22,14 @@ class CrudRouteLoader extends Loader
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
         $resource = $this->params->resolveValue($resource);
-        dump($resource);
         $routes = new RouteCollection();
         $config = Yaml::parseFile($resource);
-        $version = $config['version'];
+        $version = $config['version'] ?? null;
 
         foreach ($config['resources'] as $name => $data) {
             foreach ($data['operations'] as $op) {
                 $routes->add(
-                    "api_{$version}_{$name}_{$op}",
+                    "api_" . ($version ? "{$version}_" : "") . "{$name}_{$op}",
                     $this->buildRoute($name, $data['entity'], $data['path'], $op, $version)
                 );
             }
@@ -39,7 +38,7 @@ class CrudRouteLoader extends Loader
         return $routes;
     }
 
-    private function buildRoute(string $name, string $entity, string $basePath, string $op, string $version): Route
+    private function buildRoute(string $name, string $entity, string $basePath, string $op, ?string $version): Route
     {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -68,7 +67,7 @@ class CrudRouteLoader extends Loader
         };
 
         return new Route(
-            ($version === 'v1' ? '/api' : "/api/$version") . $path,
+            '/api' . ($version ? "/$version" : '') . $path,
             [
                 '_controller' => CrudEventController::class . "::{$controllerMethodName}",
                 '_resource' => $name,
