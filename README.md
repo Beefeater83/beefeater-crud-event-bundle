@@ -83,7 +83,7 @@ resources:
 | api_v1_categories_L | GET    | /api/v1/tournaments/{tournament}/categories      |
 | api_v1_categories_P | PATCH  | /api/v1/tournaments/{tournament}/categories/{id} |
 
-> If the `version:` key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
+> ⚠️ If the ***`version:`*** key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
 
 ---
 
