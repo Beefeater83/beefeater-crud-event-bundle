@@ -38,15 +38,15 @@ composer require beefeater/crud-event-bundle
 Add the following to `config/routes.yaml`:
 
 ```yaml
-crud_api_v2:
-    resource: '%kernel.project_dir%/config/crud_routes_v2.yaml'
+crud_api_v1:
+    resource: '%kernel.project_dir%/config/crud_routes_v1.yaml'
     type: crud_routes
 ```
 
-### Example: `crud_routes_v2.yaml`
+### Example: `crud_routes_v1.yaml`
 
 ```yaml
-version: v2
+version: v1
 resources:
   tournaments:
     entity: App\Entity\Tournament
@@ -63,27 +63,27 @@ resources:
 
 #### Routes generated for `tournaments`:
 
-| Route Name              | Method | Path                        |
-|-------------------------|--------|-----------------------------|
-| api_v2_tournaments_C    | POST   | /api/v2/tournaments         |
-| api_v2_tournaments_R    | GET    | /api/v2/tournaments/{id}    |
-| api_v2_tournaments_U    | PUT    | /api/v2/tournaments/{id}    |
-| api_v2_tournaments_D    | DELETE | /api/v2/tournaments/{id}    |
-| api_v2_tournaments_L    | GET    | /api/v2/tournaments         |
-| api_v2_tournaments_P    | PATCH  | /api/v2/tournaments/{id}    |
+| Route Name           | Method | Path                     |
+|----------------------|--------|--------------------------|
+| api_v1_tournaments_C | POST   | /api/v1/tournaments      |
+| api_v1_tournaments_R | GET    | /api/v1/tournaments/{id} |
+| api_v1_tournaments_U | PUT    | /api/v1/tournaments/{id} |
+| api_v1_tournaments_D | DELETE | /api/v1/tournaments/{id} |
+| api_v1_tournaments_L | GET    | /api/v1/tournaments      |
+| api_v1_tournaments_P | PATCH  | /api/v1/tournaments/{id} |
 
 #### Routes generated for `categories`:
 
-| Route Name              | Method | Path                                                      |
-|-------------------------|--------|-----------------------------------------------------------|
-| api_v2_categories_C     | POST   | /api/v2/tournaments/{tournament}/categories               |
-| api_v2_categories_R     | GET    | /api/v2/tournaments/{tournament}/categories/{id}          |
-| api_v2_categories_U     | PUT    | /api/v2/tournaments/{tournament}/categories/{id}          |
-| api_v2_categories_D     | DELETE | /api/v2/tournaments/{tournament}/categories/{id}          |
-| api_v2_categories_L     | GET    | /api/v2/tournaments/{tournament}/categories               |
-| api_v2_categories_P     | PATCH  | /api/v2/tournaments/{tournament}/categories/{id}          |
+| Route Name          | Method | Path                                             |
+|---------------------|--------|--------------------------------------------------|
+| api_v1_categories_C | POST   | /api/v1/tournaments/{tournament}/categories      |
+| api_v1_categories_R | GET    | /api/v1/tournaments/{tournament}/categories/{id} |
+| api_v1_categories_U | PUT    | /api/v1/tournaments/{tournament}/categories/{id} |
+| api_v1_categories_D | DELETE | /api/v1/tournaments/{tournament}/categories/{id} |
+| api_v1_categories_L | GET    | /api/v1/tournaments/{tournament}/categories      |
+| api_v1_categories_P | PATCH  | /api/v1/tournaments/{tournament}/categories/{id} |
 
-> For versions below `v2`, no version is included in the route path, e.g. `/api/categories/{id}`.
+> If the `version:` key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
 
 ---
 
@@ -128,7 +128,7 @@ You can register event listeners to:
 
 Example:
 ```
-GET /api/v2/tournaments?page=2&pageSize=10
+GET /api/v1/tournaments?page=2&pageSize=10
 ```
 
 ### 🔃 Sorting
@@ -136,7 +136,7 @@ GET /api/v2/tournaments?page=2&pageSize=10
 - `sort=+field1,-field2` — ascending/descending  
 - Example:
 ```
-GET /api/v2/tournaments?sort=-age,+name
+GET /api/v1/tournaments?sort=-age,+name
 ```
 
 ### 🧰 Filtering
@@ -160,16 +160,16 @@ Boolean values supported: `true`, `false`, `none`
 Examples:
 
 ```http
-GET /api/v2/tournaments?filter[isActive]=true
-GET /api/v2/tournaments?filter[status][eq]=active
-GET /api/v2/tournaments?filter[rating][gte]=3&filter[rating][lte]=5
+GET /api/v1/tournaments?filter[isActive]=true
+GET /api/v1/tournaments?filter[status][eq]=active
+GET /api/v1/tournaments?filter[rating][gte]=3&filter[rating][lte]=5
 ```
 
 ---
 
 ## 📦 Nested Resources
 
-If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v2/tournaments/{tournament}/categories`), it is:
+If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v1/tournaments/{tournament}/categories`), it is:
 
 - Automatically resolved and injected
 - Available for filtering
@@ -177,7 +177,7 @@ If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v2/tournaments/{
 You can combine all parameters:
 
 ```
-GET /api/v2/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+name&filter[rating][gte]=3&filter[rating][lte]=5
+GET /api/v1/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+name&filter[rating][gte]=3&filter[rating][lte]=5
 ```
 
 ---
