@@ -16,13 +16,13 @@ class CrudOperation extends Event
     private object $entity;
     private string $operation;
     private array $params;
-    private string $version;
+    private ?string $version = null;
 
     public function __construct(
         object $entity,
         string $operation,
         array $params = [],
-        string $version = 'v1'
+        ?string $version = null
     ) {
         $this->entity = $entity;
         $this->operation = $operation;
@@ -45,7 +45,7 @@ class CrudOperation extends Event
         return $this->params;
     }
 
-    public function getVersion(): string
+    public function getVersion(): ?string
     {
         return $this->version;
     }
