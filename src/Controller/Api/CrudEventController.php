@@ -18,6 +18,7 @@ use Beefeater\CrudEventBundle\Model\Page;
 use Beefeater\CrudEventBundle\Model\PaginatedResult;
 use Beefeater\CrudEventBundle\Model\Sort;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,17 +35,20 @@ class CrudEventController extends AbstractController
     private EntityManagerInterface $entityManager;
     private EventDispatcherInterface $dispatcher;
     private SerializerInterface $serializer;
+    private LoggerInterface $logger;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
         EventDispatcherInterface $dispatcher,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        LoggerInterface $logger
     ) {
         $this->entityManager = $entityManager;
         $this->validator = $validator;
         $this->dispatcher = $dispatcher;
         $this->serializer = $serializer;
+        $this->logger = $logger;
     }
 
 
@@ -275,6 +279,10 @@ class CrudEventController extends AbstractController
         $errors = $validator->validate($model, null, $groups);
 
         if (count($errors) > 0) {
+            $this->logger->error('Validation failed', [
+                'model' => get_class($model),
+                'errors' => (string) $errors,
+            ]);
             throw new PayloadValidationException(get_class($model), $errors);
         }
     }
@@ -289,6 +297,9 @@ class CrudEventController extends AbstractController
     {
         $entityClass = $request->attributes->get('_entity');
         if (!$entityClass || !class_exists($entityClass)) {
+            $this->logger->error('Invalid or missing "_entity" attribute', [
+                '_entity' => $entityClass,
+            ]);
             throw new BadRequestHttpException('Invalid or missing "_entity" attribute.');
         }
 
@@ -302,6 +313,10 @@ class CrudEventController extends AbstractController
         $entity = $this->entityManager->getRepository($entityClass)->find($id);
 
         if ($entity === null) {
+            $this->logger->error('Entity not found', [
+                'entityClass' => $entityClass,
+                'id' => $id,
+            ]);
             throw new ResourceNotFoundException($entityClass, $id);
         }
 

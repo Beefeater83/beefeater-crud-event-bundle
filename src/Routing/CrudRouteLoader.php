@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Beefeater\CrudEventBundle\Routing;
 
 use Beefeater\CrudEventBundle\Controller\Api\CrudEventController;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Route;
@@ -14,10 +15,12 @@ use Symfony\Component\Yaml\Yaml;
 class CrudRouteLoader extends Loader
 {
     private ParameterBagInterface $params;
+    private LoggerInterface $logger;
 
-    public function __construct(ParameterBagInterface $params)
+    public function __construct(ParameterBagInterface $params, LoggerInterface $logger)
     {
         $this->params = $params;
+        $this->logger = $logger;
     }
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
@@ -25,13 +28,22 @@ class CrudRouteLoader extends Loader
         $routes = new RouteCollection();
         $config = Yaml::parseFile($resource);
         $version = $config['version'] ?? null;
+        if (!isset($config['version'])) {
+            $this->logger->warning("No version defined in route config file: {$resource}");
+        }
 
         foreach ($config['resources'] as $name => $data) {
             foreach ($data['operations'] as $op) {
+                if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
+                    $this->logger->error("Unsupported operation in resource '{$name}': '{$op}'");
+                }
+                $routeName = "api_" . ($version ? "{$version}_" : "") . "{$name}_{$op}";
                 $routes->add(
-                    "api_" . ($version ? "{$version}_" : "") . "{$name}_{$op}",
+                    $routeName,
                     $this->buildRoute($name, $data['entity'], $data['path'], $op, $version)
                 );
+
+                $this->logger->info("Adding route: {$routeName}");
             }
         }
 
