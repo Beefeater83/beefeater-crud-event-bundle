@@ -255,18 +255,22 @@ composer require symfony/monolog-bundle
 2. Configure a dedicated logging channel and handler for `beefeater-crud` in your `config/packages/monolog.yaml` file. For example, in the `dev` environment:
 
 ```yaml
+monolog:
+  channels:
+    - beefeater-crud # add this channel alongside your existing ones
+    
 when@dev:
     monolog:
-        channels: ['beefeater-crud']
         handlers:
-            beefeater_crud:
+            beefeater_crud: # add this handler alongside your existing ones
                 type: stream
                 path: "%kernel.logs_dir%/beefeater-crud.log"
                 level: debug
                 channels: ["beefeater-crud"]
 ```
 
-3. You can similarly add configurations for `test` and `prod` environments, for example using `error` level logging for production.
+3. You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/beefeater-crud-test.log`.
+   For the `when@prod` environment, it's recommended to keep the default logging setup using the `fingers_crossed` handler
 
 ---
 
