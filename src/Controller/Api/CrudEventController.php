@@ -18,6 +18,7 @@ use Beefeater\CrudEventBundle\Model\Page;
 use Beefeater\CrudEventBundle\Model\PaginatedResult;
 use Beefeater\CrudEventBundle\Model\Sort;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,17 +35,20 @@ class CrudEventController extends AbstractController
     private EntityManagerInterface $entityManager;
     private EventDispatcherInterface $dispatcher;
     private SerializerInterface $serializer;
+    private LoggerInterface $logger;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
         EventDispatcherInterface $dispatcher,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        LoggerInterface $logger
     ) {
         $this->entityManager = $entityManager;
         $this->validator = $validator;
         $this->dispatcher = $dispatcher;
         $this->serializer = $serializer;
+        $this->logger = $logger;
     }
 
 
@@ -56,6 +60,12 @@ class CrudEventController extends AbstractController
 
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        $this->logger->info('Creating new entity', [
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
 
         $this->dispatcher->dispatch(new CrudBeforeEntityPersist(
             $entity,
@@ -74,6 +84,13 @@ class CrudEventController extends AbstractController
         $this->validate($this->validator, $entity, 'create');
 
         $this->saveEntity($entity);
+
+        $this->logger->info('Entity created successfully', [
+            'id' => $entity->getId(),
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
 
         $this->dispatcher->dispatch(new CrudAfterEntityPersist(
             $entity,
@@ -136,6 +153,13 @@ class CrudEventController extends AbstractController
             $version
         ), 'crud_event.update.after_persist');
 
+        $this->logger->info('Entity updated successfully', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
+
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
 
@@ -182,6 +206,12 @@ class CrudEventController extends AbstractController
             $params,
             $version
         ), 'crud_event.patch.after_persist');
+        $this->logger->info('Entity patched successfully', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version
+        ]);
 
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
@@ -189,7 +219,7 @@ class CrudEventController extends AbstractController
     public function read(Request $request, string $id): JsonResponse
     {
         $entity = $this->findEntity($request, $id);
-
+        $this->logger->info('Entity read', ['id' => $id, 'class' => get_class($entity)]);
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
 
@@ -234,12 +264,27 @@ class CrudEventController extends AbstractController
             $version
         ), 'crud_event.delete.after_remove');
 
+        $this->logger->info('Entity deleted', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
+
         return new JsonResponse(['message' => 'Entity deleted'], JsonResponse::HTTP_NO_CONTENT);
     }
 
     public function list(Request $request, Page $page, Sort $sort, Filter $filter): JsonResponse
     {
         $resourceName = $request->attributes->get('_resource');
+
+        $this->logger->info('List requested', [
+            'resource' => $resourceName,
+            'page' => $page->getPage(),
+            'pageSize' => $page->getPageSize(),
+            'orderBy' => $sort->getOrderBy(),
+            'criteria' => $filter->getCriteria(),
+        ]);
         $this->dispatcher->dispatch(new ListSettings($request), $resourceName . '.list.list_settings');
 
         $this->dispatcher->dispatch(new FilterBuildEvent($request, $filter), 'crud_event.list.filter_build');
@@ -275,6 +320,10 @@ class CrudEventController extends AbstractController
         $errors = $validator->validate($model, null, $groups);
 
         if (count($errors) > 0) {
+            $this->logger->warning('Validation failed', [
+                'model' => get_class($model),
+                'errors' => (string) $errors,
+            ]);
             throw new PayloadValidationException(get_class($model), $errors);
         }
     }
@@ -289,6 +338,9 @@ class CrudEventController extends AbstractController
     {
         $entityClass = $request->attributes->get('_entity');
         if (!$entityClass || !class_exists($entityClass)) {
+            $this->logger->error('Invalid or missing "_entity" attribute', [
+                '_entity' => $entityClass,
+            ]);
             throw new BadRequestHttpException('Invalid or missing "_entity" attribute.');
         }
 
@@ -302,6 +354,10 @@ class CrudEventController extends AbstractController
         $entity = $this->entityManager->getRepository($entityClass)->find($id);
 
         if ($entity === null) {
+            $this->logger->warning('Entity not found', [
+                'entityClass' => $entityClass,
+                'id' => $id,
+            ]);
             throw new ResourceNotFoundException($entityClass, $id);
         }
 

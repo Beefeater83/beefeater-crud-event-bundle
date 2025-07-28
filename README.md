@@ -233,3 +233,51 @@ App\EventListener\TournamentCrudListener:
   Thrown when the requested resource is not found by ID.
 
 You can register listeners to handle these exceptions globally.
+
+## 📝 Logging
+
+The Beefeater CRUD Event Bundle supports logging of key operations such as:
+
+- Route creation
+- Error logging
+- Warning logging
+
+### How to Enable Logging in Your Project
+
+To enable logging for this bundle, follow these steps:
+
+1. Install the Symfony Monolog Bundle if you haven’t already:
+
+```bash
+composer require symfony/monolog-bundle
+```
+
+2. Configure a dedicated logging channel and handler for `crud_event` in your `config/packages/monolog.yaml` file. For example, in the `dev` environment:
+
+```yaml
+monolog:
+  channels:
+    - crud_event # add this channel alongside your existing ones
+    
+when@dev:
+    monolog:
+        handlers:
+          crud_event: # add this handler alongside your existing ones
+                type: stream
+                path: "%kernel.logs_dir%/crud_event.log"
+                level: debug
+                channels: ["crud_event"]
+```
+
+3. You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/crud_event_test.log`.
+   For the `when@prod` environment, it's recommended to keep the default logging setup using the `fingers_crossed` handler
+
+---
+
+All logs related to the Beefeater CRUD Event Bundle will be saved in:
+
+```
+var/log/crud_event.log
+```
+
+This setup allows you to conveniently monitor important bundle actions and errors separately from other Symfony logs.
