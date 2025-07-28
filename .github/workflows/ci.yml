@@ -3,6 +3,8 @@ name: Build Status
 on:
     push:
         branches: [master]
+    pull_request:
+        types: [ opened, synchronize ]
 
 env:
     DATABASE_URL: localhost
