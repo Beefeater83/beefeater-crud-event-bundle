@@ -61,6 +61,12 @@ class CrudEventController extends AbstractController
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
 
+        $this->logger->info('Creating new entity', [
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
+
         $this->dispatcher->dispatch(new CrudBeforeEntityPersist(
             $entity,
             CrudOperation::CREATE,
@@ -78,6 +84,13 @@ class CrudEventController extends AbstractController
         $this->validate($this->validator, $entity, 'create');
 
         $this->saveEntity($entity);
+
+        $this->logger->info('Entity created successfully', [
+            'id' => $entity->getId(),
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
 
         $this->dispatcher->dispatch(new CrudAfterEntityPersist(
             $entity,
@@ -140,6 +153,13 @@ class CrudEventController extends AbstractController
             $version
         ), 'crud_event.update.after_persist');
 
+        $this->logger->info('Entity updated successfully', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
+
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
 
@@ -186,6 +206,12 @@ class CrudEventController extends AbstractController
             $params,
             $version
         ), 'crud_event.patch.after_persist');
+        $this->logger->info('Entity patched successfully', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version
+        ]);
 
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
@@ -193,7 +219,7 @@ class CrudEventController extends AbstractController
     public function read(Request $request, string $id): JsonResponse
     {
         $entity = $this->findEntity($request, $id);
-
+        $this->logger->info('Entity read', ['id' => $id, 'class' => get_class($entity)]);
         return $this->json($entity, JsonResponse::HTTP_OK);
     }
 
@@ -238,12 +264,27 @@ class CrudEventController extends AbstractController
             $version
         ), 'crud_event.delete.after_remove');
 
+        $this->logger->info('Entity deleted', [
+            'id' => $id,
+            'class' => $entityClass,
+            'resource' => $resourceName,
+            'version' => $version,
+        ]);
+
         return new JsonResponse(['message' => 'Entity deleted'], JsonResponse::HTTP_NO_CONTENT);
     }
 
     public function list(Request $request, Page $page, Sort $sort, Filter $filter): JsonResponse
     {
         $resourceName = $request->attributes->get('_resource');
+
+        $this->logger->info('List requested', [
+            'resource' => $resourceName,
+            'page' => $page->getPage(),
+            'pageSize' => $page->getPageSize(),
+            'orderBy' => $sort->getOrderBy(),
+            'criteria' => $filter->getCriteria(),
+        ]);
         $this->dispatcher->dispatch(new ListSettings($request), $resourceName . '.list.list_settings');
 
         $this->dispatcher->dispatch(new FilterBuildEvent($request, $filter), 'crud_event.list.filter_build');
@@ -279,7 +320,7 @@ class CrudEventController extends AbstractController
         $errors = $validator->validate($model, null, $groups);
 
         if (count($errors) > 0) {
-            $this->logger->error('Validation failed', [
+            $this->logger->warning('Validation failed', [
                 'model' => get_class($model),
                 'errors' => (string) $errors,
             ]);
@@ -313,7 +354,7 @@ class CrudEventController extends AbstractController
         $entity = $this->entityManager->getRepository($entityClass)->find($id);
 
         if ($entity === null) {
-            $this->logger->error('Entity not found', [
+            $this->logger->warning('Entity not found', [
                 'entityClass' => $entityClass,
                 'id' => $id,
             ]);

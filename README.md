@@ -252,24 +252,24 @@ To enable logging for this bundle, follow these steps:
 composer require symfony/monolog-bundle
 ```
 
-2. Configure a dedicated logging channel and handler for `beefeater-crud` in your `config/packages/monolog.yaml` file. For example, in the `dev` environment:
+2. Configure a dedicated logging channel and handler for `crud_event` in your `config/packages/monolog.yaml` file. For example, in the `dev` environment:
 
 ```yaml
 monolog:
   channels:
-    - beefeater-crud # add this channel alongside your existing ones
+    - crud_event # add this channel alongside your existing ones
     
 when@dev:
     monolog:
         handlers:
-            beefeater_crud: # add this handler alongside your existing ones
+          crud_event: # add this handler alongside your existing ones
                 type: stream
-                path: "%kernel.logs_dir%/beefeater-crud.log"
+                path: "%kernel.logs_dir%/crud_event.log"
                 level: debug
-                channels: ["beefeater-crud"]
+                channels: ["crud_event"]
 ```
 
-3. You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/beefeater-crud-test.log`.
+3. You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/crud_event_test.log`.
    For the `when@prod` environment, it's recommended to keep the default logging setup using the `fingers_crossed` handler
 
 ---
@@ -277,7 +277,7 @@ when@dev:
 All logs related to the Beefeater CRUD Event Bundle will be saved in:
 
 ```
-var/log/beefeater-crud.log
+var/log/crud_event.log
 ```
 
 This setup allows you to conveniently monitor important bundle actions and errors separately from other Symfony logs.
