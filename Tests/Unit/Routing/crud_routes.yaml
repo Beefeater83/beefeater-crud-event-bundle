@@ -1,0 +1,13 @@
+version: v1
+resources:
+  tournaments:
+    entity: App\Entity\Tournament
+    operations: [C, R, U, D, L, P]
+    path: /tournaments
+
+  categories:
+    entity: App\Entity\Category
+    operations: [C, R, U, D, L, P]
+    path: /tournaments/{tournament}/categories
+    params:
+      tournament: App\Entity\Tournament
