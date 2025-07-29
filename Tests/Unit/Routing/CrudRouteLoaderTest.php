@@ -15,7 +15,7 @@ class CrudRouteLoaderTest extends TestCase
     private string $yamlPath;
     protected function setUp(): void
     {
-        $this->yamlPath = __DIR__ . '/crud_routes.yaml';
+        $this->yamlPath = __DIR__ . '/crud_routes_test.yaml';
     }
 
     public function testLoadReturnsRouteCollection(): void
