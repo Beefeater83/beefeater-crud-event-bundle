@@ -37,6 +37,7 @@ class CrudRouteLoaderTest extends TestCase
 
         $route = $routes->get($routeName);
         $this->assertSame('/api/v1/tournaments', $route->getPath());
+        $this->assertSame(['POST'], $route->getMethods());
 
         $controller = $route->getDefault('_controller');
         $this->assertStringContainsString('CrudEventController', $controller);
