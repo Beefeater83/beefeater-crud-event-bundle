@@ -9,6 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 abstract class AbstractRepository extends ServiceEntityRepository
 {
@@ -54,8 +55,9 @@ abstract class AbstractRepository extends ServiceEntityRepository
                     default:
                         throw new \InvalidArgumentException("Unknown operator: $operator");
                 }
+                $type = $value instanceof Uuid ? 'uuid' : null;
 
-                $qb->setParameter($paramName, $value);
+                $qb->setParameter($paramName, $value, $type);
             }
         }
     }
