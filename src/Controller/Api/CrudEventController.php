@@ -9,6 +9,7 @@ use Beefeater\CrudEventBundle\Event\CrudAfterEntityPersist;
 use Beefeater\CrudEventBundle\Event\CrudBeforeEntityDelete;
 use Beefeater\CrudEventBundle\Event\CrudBeforeEntityPersist;
 use Beefeater\CrudEventBundle\Event\CrudOperation;
+use Beefeater\CrudEventBundle\Event\EntityBeforeDeserialize;
 use Beefeater\CrudEventBundle\Event\FilterBuildEvent;
 use Beefeater\CrudEventBundle\Event\ListSettings;
 use Beefeater\CrudEventBundle\Exception\PayloadValidationException;
@@ -305,6 +306,10 @@ class CrudEventController extends AbstractController
     }
     protected function fromJson(Request $request, $className, object $model = null, array $groups = []): object
     {
+        $this->dispatcher->dispatch(new EntityBeforeDeserialize(
+            $model,
+            $className
+        ), 'entity.before_deserialize');
         $context = ($model) ? [AbstractNormalizer::OBJECT_TO_POPULATE => $model] : [];
 
         if (!empty($groups)) {

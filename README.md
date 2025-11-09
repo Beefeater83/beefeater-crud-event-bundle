@@ -212,6 +212,9 @@ GET /api/v1/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+na
 - `{resource}.list.list_settings`
 - `crud_event.list.filter_build`
 
+### Before deserialize
+- `entity.before_deserialize`
+
 ---
 
 ### 🔔 Example Event Listener Registration
