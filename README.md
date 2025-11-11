@@ -185,24 +185,28 @@ GET /api/v1/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+na
 ## 📢 Dispatched Events
 
 ### Create
+- `{resource}.create.on_request`
 - `{resource}.create.before_persist`
 - `crud_event.create.before_persist`
 - `{resource}.create.after_persist`
 - `crud_event.create.after_persist`
 
 ### Update
+- `{resource}.update.on_request`
 - `{resource}.update.before_persist`
 - `crud_event.update.before_persist`
 - `{resource}.update.after_persist`
 - `crud_event.update.after_persist`
 
 ### Patch
+- `{resource}.patch.on_request`
 - `{resource}.patch.before_persist`
 - `crud_event.patch.before_persist`
 - `{resource}.patch.after_persist`
 - `crud_event.patch.after_persist`
 
 ### Delete
+- `{resource}.delete.on_request`
 - `{resource}.delete.before_remove`
 - `crud_event.delete.before_remove`
 - `{resource}.delete.after_remove`
