@@ -8,6 +8,10 @@ use Beefeater\CrudEventBundle\Event\CrudAfterEntityDelete;
 use Beefeater\CrudEventBundle\Event\CrudAfterEntityPersist;
 use Beefeater\CrudEventBundle\Event\CrudBeforeEntityDelete;
 use Beefeater\CrudEventBundle\Event\CrudBeforeEntityPersist;
+use Beefeater\CrudEventBundle\Event\CrudOnCreateRequest;
+use Beefeater\CrudEventBundle\Event\CrudOnDeleteRequest;
+use Beefeater\CrudEventBundle\Event\CrudOnPatchRequest;
+use Beefeater\CrudEventBundle\Event\CrudOnUpdateRequest;
 use Beefeater\CrudEventBundle\Event\CrudOperation;
 use Beefeater\CrudEventBundle\Event\EntityBeforeDeserialize;
 use Beefeater\CrudEventBundle\Event\FilterBuildEvent;
@@ -61,6 +65,13 @@ class CrudEventController extends AbstractController
 
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        $this->dispatcher->dispatch(new CrudOnCreateRequest(
+            $entity,
+            CrudOperation::CREATE,
+            $request,
+            $version
+        ), $resourceName . '.create.on_request');
 
         $this->logger->info('Creating new entity', [
             'class' => $entityClass,
@@ -116,11 +127,18 @@ class CrudEventController extends AbstractController
 
         $entity = $this->findEntity($request, $id);
 
-        $this->fromJson($request, $entityClass, $entity, ['update']);
-
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
         $params = ['id' => $id];
+
+        $this->dispatcher->dispatch(new CrudOnUpdateRequest(
+            $entity,
+            CrudOperation::UPDATE,
+            $request,
+            $version
+        ), $resourceName . '.update.on_request');
+
+        $this->fromJson($request, $entityClass, $entity, ['update']);
 
         $this->dispatcher->dispatch(new CrudBeforeEntityPersist(
             $entity,
@@ -170,11 +188,18 @@ class CrudEventController extends AbstractController
 
         $entity = $this->findEntity($request, $id);
 
-        $this->fromJson($request, $entityClass, $entity, ['patch']);
-
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
         $params = ['id' => $id];
+
+        $this->dispatcher->dispatch(new CrudOnPatchRequest(
+            $entity,
+            CrudOperation::PATCH,
+            $request,
+            $version
+        ), $resourceName . '.patch.on_request');
+
+        $this->fromJson($request, $entityClass, $entity, ['patch']);
 
         $this->dispatcher->dispatch(new CrudBeforeEntityPersist(
             $entity,
@@ -231,6 +256,13 @@ class CrudEventController extends AbstractController
         $params = ['id' => $id];
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        $this->dispatcher->dispatch(new CrudOnDeleteRequest(
+            $entity,
+            CrudOperation::DELETE,
+            $request,
+            $version
+        ), $resourceName . '.delete.on_request');
 
         $this->dispatcher->dispatch(new CrudBeforeEntityDelete(
             $entity,
@@ -307,6 +339,7 @@ class CrudEventController extends AbstractController
     protected function fromJson(Request $request, $className, object $model = null, array $groups = []): object
     {
         $this->dispatcher->dispatch(new EntityBeforeDeserialize(
+            $request,
             $model,
             $className
         ), 'entity.before_deserialize');
