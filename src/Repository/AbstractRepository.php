@@ -34,7 +34,11 @@ abstract class AbstractRepository extends ServiceEntityRepository
 
                 switch ($operator) {
                     case 'eq':
-                        $qb->andWhere("entity.$field = :$paramName");
+                        if ($value !== null) {
+                            $qb->andWhere("entity.$field = :$paramName");
+                        } else {
+                            $qb->andWhere("entity.$field IS NULL");
+                        }
                         break;
                     case 'like':
                         $qb->andWhere("entity.$field LIKE :$paramName");
@@ -51,6 +55,57 @@ abstract class AbstractRepository extends ServiceEntityRepository
                         break;
                     case 'lt':
                         $qb->andWhere("entity.$field < :$paramName");
+                        break;
+                    case 'neq':
+                        if ($value !== null) {
+                            $qb->andWhere("entity.$field <> :$paramName");
+                        } else {
+                            $qb->andWhere("entity.$field IS NOT NULL");
+                        }
+                        break;
+                    case 'in':
+                        $hasNull = false;
+                        $nonNullValues = [];
+
+                        foreach ($value as $v) {
+                            if ($v === null) {
+                                $hasNull = true;
+                            } else {
+                                $nonNullValues[] = $v;
+                            }
+                        }
+
+                        if (!empty($nonNullValues) && $hasNull) {
+                            $qb->andWhere("(entity.$field IN (:$paramName) OR entity.$field IS NULL)");
+                            $qb->setParameter($paramName, $nonNullValues);
+                        } elseif (!empty($nonNullValues)) {
+                            $qb->andWhere($qb->expr()->in("entity.$field", ":$paramName"));
+                            $qb->setParameter($paramName, $nonNullValues);
+                        } else {
+                            $qb->andWhere("entity.$field IS NULL");
+                        }
+                        break;
+                    case 'nin':
+                        $hasNull = false;
+                        $nonNullValues = [];
+
+                        foreach ($value as $v) {
+                            if ($v === null) {
+                                $hasNull = true;
+                            } else {
+                                $nonNullValues[] = $v;
+                            }
+                        }
+
+                        if (!empty($nonNullValues) && $hasNull) {
+                            $qb->andWhere("(entity.$field NOT IN (:$paramName) AND entity.$field IS NOT NULL)");
+                            $qb->setParameter($paramName, $nonNullValues);
+                        } elseif (!empty($nonNullValues)) {
+                            $qb->andWhere($qb->expr()->notIn("entity.$field", ":$paramName"));
+                            $qb->setParameter($paramName, $nonNullValues);
+                        } else {
+                            $qb->andWhere("entity.$field IS NOT NULL");
+                        }
                         break;
                     default:
                         throw new \InvalidArgumentException("Unknown operator: $operator");
