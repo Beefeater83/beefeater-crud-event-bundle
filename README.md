@@ -146,15 +146,17 @@ GET /api/v1/tournaments?sort=-age,+name
 
 Supported operators:
 
-| Operator | Description         |
-|----------|---------------------|
-| eq       | equals (default)    |
-| like     | substring match     |
-| gte      | greater or equal    |
-| lte      | less or equal       |
-| gt       | greater than        |
-| lt       | less than           |
-
+| Operator | Description                       |
+|----------|-----------------------------------|
+| eq       | equals (default) (null safe)      |
+| like     | substring match                   |
+| gte      | greater or equal                  |
+| lte      | less or equal                     |
+| gt       | greater than                      |
+| lt       | less than                         |
+| neq      | NOT equals (null safe)            |
+| in       | value is in array (null safe)     |
+| nin      | value is NOT in array (null safe) |
 Boolean values supported: `true`, `false`, `none`
 
 Examples:
@@ -163,6 +165,7 @@ Examples:
 GET /api/v1/tournaments?filter[isActive]=true
 GET /api/v1/tournaments?filter[status][eq]=active
 GET /api/v1/tournaments?filter[rating][gte]=3&filter[rating][lte]=5
+GET /api/v1/tournaments?filter[category][in][]=pro&filter[category][nin][]=amateur
 ```
 
 ---
