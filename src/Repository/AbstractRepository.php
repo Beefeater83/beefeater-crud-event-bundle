@@ -110,9 +110,10 @@ abstract class AbstractRepository extends ServiceEntityRepository
                     default:
                         throw new \InvalidArgumentException("Unknown operator: $operator");
                 }
-                $type = $value instanceof Uuid ? 'uuid' : null;
-
-                $qb->setParameter($paramName, $value, $type);
+                if ($value !== null) {
+                    $type = $value instanceof Uuid ? 'uuid' : null;
+                    $qb->setParameter($paramName, $value, $type);
+                }
             }
         }
     }
