@@ -31,6 +31,8 @@ abstract class AbstractRepository extends ServiceEntityRepository
         foreach ($criteria as $field => $filters) {
             foreach ($filters as $operator => $value) {
                 $paramName = $field . '_' . $operator;
+                $paramValue = $value;
+                $setParameter = true;
 
                 switch ($operator) {
                     case 'eq':
@@ -38,6 +40,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
                             $qb->andWhere("entity.$field = :$paramName");
                         } else {
                             $qb->andWhere("entity.$field IS NULL");
+                            $setParameter = false;
                         }
                         break;
                     case 'like':
@@ -61,58 +64,45 @@ abstract class AbstractRepository extends ServiceEntityRepository
                             $qb->andWhere("entity.$field <> :$paramName");
                         } else {
                             $qb->andWhere("entity.$field IS NOT NULL");
+                            $setParameter = false;
                         }
                         break;
                     case 'in':
-                        $hasNull = false;
-                        $nonNullValues = [];
-
-                        foreach ($value as $v) {
-                            if ($v === null) {
-                                $hasNull = true;
-                            } else {
-                                $nonNullValues[] = $v;
-                            }
-                        }
+                        $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
+                        $hasNull = is_array($value) && count($nonNullValues) < count($value);
 
                         if (!empty($nonNullValues) && $hasNull) {
                             $qb->andWhere("(entity.$field IN (:$paramName) OR entity.$field IS NULL)");
-                            $qb->setParameter($paramName, $nonNullValues);
+                            $paramValue = $nonNullValues;
                         } elseif (!empty($nonNullValues)) {
                             $qb->andWhere($qb->expr()->in("entity.$field", ":$paramName"));
-                            $qb->setParameter($paramName, $nonNullValues);
+                            $paramValue = $nonNullValues;
                         } else {
                             $qb->andWhere("entity.$field IS NULL");
+                            $setParameter = false;
                         }
                         break;
                     case 'nin':
-                        $hasNull = false;
-                        $nonNullValues = [];
-
-                        foreach ($value as $v) {
-                            if ($v === null) {
-                                $hasNull = true;
-                            } else {
-                                $nonNullValues[] = $v;
-                            }
-                        }
+                        $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
+                        $hasNull = is_array($value) && count($nonNullValues) < count($value);
 
                         if (!empty($nonNullValues) && $hasNull) {
                             $qb->andWhere("(entity.$field NOT IN (:$paramName) AND entity.$field IS NOT NULL)");
-                            $qb->setParameter($paramName, $nonNullValues);
+                            $paramValue = $nonNullValues;
                         } elseif (!empty($nonNullValues)) {
                             $qb->andWhere($qb->expr()->notIn("entity.$field", ":$paramName"));
-                            $qb->setParameter($paramName, $nonNullValues);
+                            $paramValue = $nonNullValues;
                         } else {
                             $qb->andWhere("entity.$field IS NOT NULL");
+                            $setParameter = false;
                         }
                         break;
                     default:
                         throw new \InvalidArgumentException("Unknown operator: $operator");
                 }
-                if ($value !== null) {
-                    $type = $value instanceof Uuid ? 'uuid' : null;
-                    $qb->setParameter($paramName, $value, $type);
+                if ($setParameter) {
+                    $type = $paramValue instanceof Uuid ? 'uuid' : null;
+                    $qb->setParameter($paramName, $paramValue, $type);
                 }
             }
         }
