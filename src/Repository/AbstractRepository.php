@@ -31,10 +31,17 @@ abstract class AbstractRepository extends ServiceEntityRepository
         foreach ($criteria as $field => $filters) {
             foreach ($filters as $operator => $value) {
                 $paramName = $field . '_' . $operator;
+                $paramValue = $value;
+                $setParameter = true;
 
                 switch ($operator) {
                     case 'eq':
-                        $qb->andWhere("entity.$field = :$paramName");
+                        if ($value !== null) {
+                            $qb->andWhere("entity.$field = :$paramName");
+                        } else {
+                            $qb->andWhere("entity.$field IS NULL");
+                            $setParameter = false;
+                        }
                         break;
                     case 'like':
                         $qb->andWhere("entity.$field LIKE :$paramName");
@@ -52,12 +59,57 @@ abstract class AbstractRepository extends ServiceEntityRepository
                     case 'lt':
                         $qb->andWhere("entity.$field < :$paramName");
                         break;
+                    case 'neq':
+                        if ($value !== null) {
+                            $qb->andWhere("entity.$field <> :$paramName");
+                        } else {
+                            $qb->andWhere("entity.$field IS NOT NULL");
+                            $setParameter = false;
+                        }
+                        break;
+                    case 'in':
+                        if (!is_array($value) || $value === []) {
+                            break;
+                        }
+                        $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
+                        $hasNull = (is_array($value)) && (count($nonNullValues) < count($value));
+
+                        if (!empty($nonNullValues) && $hasNull) {
+                            $qb->andWhere("(entity.$field IN (:$paramName) OR entity.$field IS NULL)");
+                            $paramValue = $nonNullValues;
+                        } elseif (!empty($nonNullValues)) {
+                            $qb->andWhere($qb->expr()->in("entity.$field", ":$paramName"));
+                            $paramValue = $nonNullValues;
+                        } else {
+                            $qb->andWhere("entity.$field IS NULL");
+                            $setParameter = false;
+                        }
+                        break;
+                    case 'nin':
+                        if (!is_array($value) || $value === []) {
+                            break;
+                        }
+                        $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
+                        $hasNull = (is_array($value)) && (count($nonNullValues) < count($value));
+
+                        if (!empty($nonNullValues) && $hasNull) {
+                            $qb->andWhere("(entity.$field NOT IN (:$paramName) AND entity.$field IS NOT NULL)");
+                            $paramValue = $nonNullValues;
+                        } elseif (!empty($nonNullValues)) {
+                            $qb->andWhere("(entity.$field NOT IN (:$paramName) OR entity.$field IS NULL)");
+                            $paramValue = $nonNullValues;
+                        } else {
+                            $qb->andWhere("entity.$field IS NOT NULL");
+                            $setParameter = false;
+                        }
+                        break;
                     default:
                         throw new \InvalidArgumentException("Unknown operator: $operator");
                 }
-                $type = $value instanceof Uuid ? 'uuid' : null;
-
-                $qb->setParameter($paramName, $value, $type);
+                if ($setParameter) {
+                    $type = $paramValue instanceof Uuid ? 'uuid' : null;
+                    $qb->setParameter($paramName, $paramValue, $type);
+                }
             }
         }
     }
