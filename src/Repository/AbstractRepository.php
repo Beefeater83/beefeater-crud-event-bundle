@@ -68,6 +68,9 @@ abstract class AbstractRepository extends ServiceEntityRepository
                         }
                         break;
                     case 'in':
+                        if (!is_array($value) || $value === []) {
+                            break;
+                        }
                         $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
                         $hasNull = is_array($value) && count($nonNullValues) < count($value);
 
@@ -83,6 +86,9 @@ abstract class AbstractRepository extends ServiceEntityRepository
                         }
                         break;
                     case 'nin':
+                        if (!is_array($value) || $value === []) {
+                            break;
+                        }
                         $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
                         $hasNull = is_array($value) && count($nonNullValues) < count($value);
 
@@ -90,7 +96,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
                             $qb->andWhere("(entity.$field NOT IN (:$paramName) AND entity.$field IS NOT NULL)");
                             $paramValue = $nonNullValues;
                         } elseif (!empty($nonNullValues)) {
-                            $qb->andWhere($qb->expr()->notIn("entity.$field", ":$paramName"));
+                            $qb->andWhere("(entity.$field NOT IN (:$paramName) OR entity.$field IS NULL)");
                             $paramValue = $nonNullValues;
                         } else {
                             $qb->andWhere("entity.$field IS NOT NULL");
