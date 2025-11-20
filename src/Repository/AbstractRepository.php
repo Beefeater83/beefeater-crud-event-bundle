@@ -72,7 +72,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
                             break;
                         }
                         $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
-                        $hasNull = is_array($value) && count($nonNullValues) < count($value);
+                        $hasNull = (is_array($value)) && (count($nonNullValues) < count($value));
 
                         if (!empty($nonNullValues) && $hasNull) {
                             $qb->andWhere("(entity.$field IN (:$paramName) OR entity.$field IS NULL)");
@@ -90,7 +90,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
                             break;
                         }
                         $nonNullValues = is_array($value) ? array_filter($value, fn($v) => $v !== null) : [];
-                        $hasNull = is_array($value) && count($nonNullValues) < count($value);
+                        $hasNull = (is_array($value)) && (count($nonNullValues) < count($value));
 
                         if (!empty($nonNullValues) && $hasNull) {
                             $qb->andWhere("(entity.$field NOT IN (:$paramName) AND entity.$field IS NOT NULL)");
