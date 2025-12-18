@@ -60,11 +60,24 @@ class CrudEventController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         $entityClass = $this->getEntityClass($request);
-
-        $entity = $this->fromJson($request, $entityClass, null, ['create']);
-
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        return $this->handleCreate(
+            $request,
+            $version,
+            $resourceName,
+            $entityClass
+        );
+    }
+
+    public function handleCreate(
+        Request $request,
+        string $version,
+        string $resourceName,
+        string $entityClass
+    ): JsonResponse {
+        $entity = $this->fromJson($request, $entityClass, null, ['create']);
 
         $this->dispatcher->dispatch(new CrudOnCreateRequest(
             $entity,
@@ -124,11 +137,26 @@ class CrudEventController extends AbstractController
     public function update(Request $request, string $id): JsonResponse
     {
         $entityClass = $this->getEntityClass($request);
-
-        $entity = $this->findEntity($request, $id);
-
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        return $this->handleUpdate(
+            $request,
+            $version,
+            $resourceName,
+            $entityClass,
+            $id
+        );
+    }
+
+    public function handleUpdate(
+        Request $request,
+        string $version,
+        string $resourceName,
+        string $entityClass,
+        string $id
+    ): JsonResponse {
+        $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
 
         $this->dispatcher->dispatch(new CrudOnUpdateRequest(
@@ -185,11 +213,27 @@ class CrudEventController extends AbstractController
     public function patch(Request $request, string $id): JsonResponse
     {
         $entityClass = $this->getEntityClass($request);
-
-        $entity = $this->findEntity($request, $id);
-
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        return $this->handlePatch(
+            $request,
+            $version,
+            $resourceName,
+            $entityClass,
+            $id
+        );
+    }
+
+    public function handlePatch(
+        Request $request,
+        string $version,
+        string $resourceName,
+        string $entityClass,
+        string $id
+    ): JsonResponse {
+
+        $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
 
         $this->dispatcher->dispatch(new CrudOnPatchRequest(
@@ -251,11 +295,25 @@ class CrudEventController extends AbstractController
 
     public function delete(Request $request, string $id): JsonResponse
     {
-        $entity = $this->findEntity($request, $id);
-
-        $params = ['id' => $id];
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
+
+        return $this->handleDelete(
+            $request,
+            $version,
+            $resourceName,
+            $id
+        );
+    }
+
+    public function handleDelete(
+        Request $request,
+        string $version,
+        string $resourceName,
+        string $id
+    ): JsonResponse {
+        $entity = $this->findEntity($request, $id);
+        $params = ['id' => $id];
 
         $this->dispatcher->dispatch(new CrudOnDeleteRequest(
             $entity,
@@ -310,6 +368,22 @@ class CrudEventController extends AbstractController
     public function list(Request $request, Page $page, Sort $sort, Filter $filter): JsonResponse
     {
         $resourceName = $request->attributes->get('_resource');
+        return $this->handleList(
+            $request,
+            $page,
+            $sort,
+            $filter,
+            $resourceName
+        );
+    }
+
+    protected function handleList(
+        Request $request,
+        Page $page,
+        Sort $sort,
+        Filter $filter,
+        string $resourceName
+    ): JsonResponse {
 
         $this->logger->info('List requested', [
             'resource' => $resourceName,
@@ -336,6 +410,7 @@ class CrudEventController extends AbstractController
         );
         return $this->json($paginatedResponse, Response::HTTP_OK);
     }
+
     protected function fromJson(Request $request, $className, object $model = null, array $groups = []): object
     {
         $this->dispatcher->dispatch(new EntityBeforeDeserialize(
