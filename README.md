@@ -291,3 +291,14 @@ var/log/crud_event.log
 ```
 
 This setup allows you to conveniently monitor important bundle actions and errors separately from other Symfony logs.
+
+## 🧩 Controller Inheritance
+
+CrudEventController exposes protected handle* methods for reuse in child controllers
+
+You can define your own endpoints, run **custom logic (e.g. SECURITY checks)**, and then call:
+- parent::handleCreate()
+- parent::handleUpdate()
+- parent::handlePatch()
+- parent::handleDelete()
+- parent::handleList()
