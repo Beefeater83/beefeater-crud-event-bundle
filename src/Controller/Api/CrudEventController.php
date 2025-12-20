@@ -71,7 +71,7 @@ class CrudEventController extends AbstractController
         );
     }
 
-    public function handleCreate(
+    protected function handleCreate(
         Request $request,
         string $version,
         string $resourceName,
@@ -149,7 +149,7 @@ class CrudEventController extends AbstractController
         );
     }
 
-    public function handleUpdate(
+    protected function handleUpdate(
         Request $request,
         string $version,
         string $resourceName,
@@ -225,7 +225,7 @@ class CrudEventController extends AbstractController
         );
     }
 
-    public function handlePatch(
+    protected function handlePatch(
         Request $request,
         string $version,
         string $resourceName,
@@ -306,7 +306,7 @@ class CrudEventController extends AbstractController
         );
     }
 
-    public function handleDelete(
+    protected function handleDelete(
         Request $request,
         string $version,
         string $resourceName,
