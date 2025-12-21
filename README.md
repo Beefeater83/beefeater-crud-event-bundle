@@ -297,8 +297,13 @@ This setup allows you to conveniently monitor important bundle actions and error
 CrudEventController exposes protected handle* methods for reuse in child controllers
 
 You can define your own endpoints, run **custom logic (e.g. SECURITY checks)**, and then call:
-- parent::handleCreate()
-- parent::handleUpdate()
-- parent::handlePatch()
-- parent::handleDelete()
-- parent::handleList()
+- parent::handleCreate(Request \$request, string \$resourceName, string \$entityClass, ?string \$version = null)
+- parent::handleUpdate(Request \$request, string \$resourceName, string \$entityClass, string \$id, ?string \$version = null)
+- parent::handlePatch(Request \$request, string \$resourceName, string \$entityClass, string \$id, ?string \$version = null)
+- parent::handleDelete(Request \$request, string \$resourceName, string \$id, ?string \$version = null)
+- parent::handleList(Request \$request, Page \$page, Sort \$sort, Filter \$filter, string \$resourceName)
+
+⚠️ Note: When using handleList() in your child controllers, make sure to import the types from the bundle:
+- use Beefeater\CrudEventBundle\Model\Page;
+- use Beefeater\CrudEventBundle\Model\Sort;
+- use Beefeater\CrudEventBundle\Model\Filter;

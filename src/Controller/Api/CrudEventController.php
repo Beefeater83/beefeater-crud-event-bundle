@@ -65,17 +65,17 @@ class CrudEventController extends AbstractController
 
         return $this->handleCreate(
             $request,
-            $version,
             $resourceName,
-            $entityClass
+            $entityClass,
+            $version
         );
     }
 
     protected function handleCreate(
         Request $request,
-        string $version,
         string $resourceName,
-        string $entityClass
+        string $entityClass,
+        ?string $version = null
     ): JsonResponse {
         $entity = $this->fromJson($request, $entityClass, null, ['create']);
 
@@ -142,19 +142,19 @@ class CrudEventController extends AbstractController
 
         return $this->handleUpdate(
             $request,
-            $version,
             $resourceName,
             $entityClass,
-            $id
+            $id,
+            $version
         );
     }
 
     protected function handleUpdate(
         Request $request,
-        string $version,
         string $resourceName,
         string $entityClass,
-        string $id
+        string $id,
+        ?string $version = null
     ): JsonResponse {
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
@@ -218,19 +218,19 @@ class CrudEventController extends AbstractController
 
         return $this->handlePatch(
             $request,
-            $version,
             $resourceName,
             $entityClass,
-            $id
+            $id,
+            $version
         );
     }
 
     protected function handlePatch(
         Request $request,
-        string $version,
         string $resourceName,
         string $entityClass,
-        string $id
+        string $id,
+        ?string $version = null,
     ): JsonResponse {
 
         $entity = $this->findEntity($request, $id);
@@ -300,17 +300,17 @@ class CrudEventController extends AbstractController
 
         return $this->handleDelete(
             $request,
-            $version,
             $resourceName,
-            $id
+            $id,
+            $version
         );
     }
 
     protected function handleDelete(
         Request $request,
-        string $version,
         string $resourceName,
-        string $id
+        string $id,
+        ?string $version = null
     ): JsonResponse {
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
