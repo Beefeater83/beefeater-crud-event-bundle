@@ -156,6 +156,7 @@ class CrudEventController extends AbstractController
         string $id,
         ?string $version = null
     ): JsonResponse {
+        $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
 
@@ -232,7 +233,7 @@ class CrudEventController extends AbstractController
         string $id,
         ?string $version = null,
     ): JsonResponse {
-
+        $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
 
@@ -295,12 +296,14 @@ class CrudEventController extends AbstractController
 
     public function delete(Request $request, string $id): JsonResponse
     {
+        $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
 
         return $this->handleDelete(
             $request,
             $resourceName,
+            $entityClass,
             $id,
             $version
         );
@@ -309,9 +312,11 @@ class CrudEventController extends AbstractController
     protected function handleDelete(
         Request $request,
         string $resourceName,
+        string $entityClass,
         string $id,
         ?string $version = null
     ): JsonResponse {
+        $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
 

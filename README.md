@@ -300,7 +300,7 @@ You can define your own endpoints, run **custom logic (e.g. SECURITY checks)**, 
 - parent::handleCreate(Request \$request, string \$resourceName, string \$entityClass, ?string \$version = null)
 - parent::handleUpdate(Request \$request, string \$resourceName, string \$entityClass, string \$id, ?string \$version = null)
 - parent::handlePatch(Request \$request, string \$resourceName, string \$entityClass, string \$id, ?string \$version = null)
-- parent::handleDelete(Request \$request, string \$resourceName, string \$id, ?string \$version = null)
+- parent::handleDelete(Request \$request, string \$resourceName, string \$entityClass, string \$id, ?string \$version = null)
 - parent::handleList(Request \$request, Page \$page, Sort \$sort, Filter \$filter, string \$resourceName)
 
 ⚠️ Note: When using handleList() in your child controllers, make sure to import the types from the bundle:
