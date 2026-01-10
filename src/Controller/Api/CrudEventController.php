@@ -28,11 +28,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class CrudEventController extends AbstractController
 {
@@ -41,24 +43,28 @@ class CrudEventController extends AbstractController
     private EventDispatcherInterface $dispatcher;
     private SerializerInterface $serializer;
     private LoggerInterface $logger;
+    private ?Security $security;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
         EventDispatcherInterface $dispatcher,
         SerializerInterface $serializer,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?Security $security = null
     ) {
         $this->entityManager = $entityManager;
         $this->validator = $validator;
         $this->dispatcher = $dispatcher;
         $this->serializer = $serializer;
         $this->logger = $logger;
+        $this->security = $security;
     }
 
 
     public function create(Request $request): JsonResponse
     {
+        $this->checkSecurity($request, 'create');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -136,6 +142,7 @@ class CrudEventController extends AbstractController
 
     public function update(Request $request, string $id): JsonResponse
     {
+        $this->checkSecurity($request, 'update');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -213,6 +220,7 @@ class CrudEventController extends AbstractController
 
     public function patch(Request $request, string $id): JsonResponse
     {
+        $this->checkSecurity($request, 'patch');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -289,6 +297,7 @@ class CrudEventController extends AbstractController
 
     public function read(Request $request, string $id): JsonResponse
     {
+        $this->checkSecurity($request, 'read');
         $entity = $this->findEntity($request, $id);
         $this->logger->info('Entity read', ['id' => $id, 'class' => get_class($entity)]);
         return $this->json($entity, JsonResponse::HTTP_OK);
@@ -296,6 +305,7 @@ class CrudEventController extends AbstractController
 
     public function delete(Request $request, string $id): JsonResponse
     {
+        $this->checkSecurity($request, 'delete');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -372,6 +382,7 @@ class CrudEventController extends AbstractController
 
     public function list(Request $request, Page $page, Sort $sort, Filter $filter): JsonResponse
     {
+        $this->checkSecurity($request, 'list');
         $resourceName = $request->attributes->get('_resource');
         return $this->handleList(
             $request,
@@ -480,5 +491,21 @@ class CrudEventController extends AbstractController
         }
 
         return $entity;
+    }
+
+    protected function checkSecurity(Request $request, string $operation): void
+    {
+        if ($this->security === null) {
+            return;
+        }
+
+        $roles = $request->attributes->get('_security', [])[$operation] ?? [];
+        foreach ($roles as $role) {
+            if (!$this->security->isGranted($role)) {
+                $this->logger->error("Access denied for operation {$operation}");
+                throw new AccessDeniedHttpException("Access denied for operation {$operation}");
+            }
+            $this->logger->info("Access confirmed for operation {$operation}");
+        }
     }
 }

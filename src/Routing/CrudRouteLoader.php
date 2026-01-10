@@ -32,6 +32,13 @@ class CrudRouteLoader extends Loader
             $this->logger->warning("No version defined in route config file: {$resource}");
         }
 
+        $securityRoles = $config['security'] ?? null;
+        $securityRolesByEndpoints = [];
+        if (isset($securityRoles)) {
+            $securityRolesByEndpoints = $this->securityRolesForOp($securityRoles);
+            $this->logger->warning("Security defined in route config file: {$resource}");
+        }
+
         foreach ($config['resources'] as $name => $data) {
             foreach ($data['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
@@ -40,7 +47,7 @@ class CrudRouteLoader extends Loader
                 $routeName = "api_" . ($version ? "{$version}_" : "") . "{$name}_{$op}";
                 $routes->add(
                     $routeName,
-                    $this->buildRoute($name, $data['entity'], $data['path'], $op, $version)
+                    $this->buildRoute($name, $data['entity'], $data['path'], $op, $version, $securityRolesByEndpoints)
                 );
 
                 $this->logger->info("Adding route: {$routeName}");
@@ -50,8 +57,14 @@ class CrudRouteLoader extends Loader
         return $routes;
     }
 
-    private function buildRoute(string $name, string $entity, string $basePath, string $op, ?string $version): Route
-    {
+    private function buildRoute(
+        string $name,
+        string $entity,
+        string $basePath,
+        string $op,
+        ?string $version,
+        ?array $securityRolesByEndpoints
+    ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
             'R' => ['GET'],
@@ -86,6 +99,7 @@ class CrudRouteLoader extends Loader
                 '_entity' => $entity,
                 '_operation' => $op,
                 '_version' => $version,
+                '_security' => $securityRolesByEndpoints[$controllerMethodName] ?? [],
             ],
             [],
             [],
@@ -93,6 +107,43 @@ class CrudRouteLoader extends Loader
             [],
             $methods
         );
+    }
+
+    public function securityRolesForOp(array $configSecurity): array
+    {
+        $securityRolesByEndpoints = [];
+        foreach ($configSecurity as $operation => $rolesArray) {
+            if (!in_array($operation, ['C','R','U','D','L','P'], true)) {
+                $this->logger->error("Security operation: '{$operation}' is not allowed");
+                throw new \InvalidArgumentException("Invalid security operation: $operation");
+            }
+
+            if (!is_array($rolesArray)) {
+                $this->logger->error("Security roles array must be array");
+                throw new \InvalidArgumentException("Security roles for $operation must be array");
+            }
+            switch ($operation) {
+                case 'C':
+                    $securityRolesByEndpoints['create'] = $rolesArray;
+                    break;
+                case 'R':
+                    $securityRolesByEndpoints['read'] = $rolesArray;
+                    break;
+                case 'U':
+                    $securityRolesByEndpoints['update'] = $rolesArray;
+                    break;
+                case 'D':
+                    $securityRolesByEndpoints['delete'] = $rolesArray;
+                    break;
+                case 'L':
+                    $securityRolesByEndpoints['list'] = $rolesArray;
+                    break;
+                case 'P':
+                    $securityRolesByEndpoints['patch'] = $rolesArray;
+                    break;
+            }
+        }
+        return $securityRolesByEndpoints;
     }
 
     public function supports($resource, ?string $type = null): bool
