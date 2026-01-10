@@ -32,14 +32,12 @@ class CrudRouteLoader extends Loader
             $this->logger->warning("No version defined in route config file: {$resource}");
         }
 
-        $securityRoles = $config['security'] ?? null;
-        $securityRolesByEndpoints = [];
-        if (isset($securityRoles)) {
-            $securityRolesByEndpoints = $this->securityRolesForOp($securityRoles);
-            $this->logger->warning("Security defined in route config file: {$resource}");
-        }
-
         foreach ($config['resources'] as $name => $data) {
+            $securityRolesByEndpoints = [];
+            if (isset($config['security'])) {
+                $securityRolesByEndpoints = $this->securityRolesForOp($config['security']);
+                $this->logger->warning("Security defined in route config file: {$resource}");
+            }
             foreach ($data['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
                     $this->logger->error("Unsupported operation in resource '{$name}': '{$op}'");
