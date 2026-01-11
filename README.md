@@ -84,7 +84,6 @@ resources:
 | api_v1_categories_P | PATCH  | /api/v1/tournaments/{tournament}/categories/{id} |
 
 > ⚠️ If the ***`version:`*** key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
-
 ---
 
 ## 📘 How It Works
@@ -307,3 +306,49 @@ You can define your own endpoints, run **custom logic (e.g. SECURITY checks)**, 
 - use Beefeater\CrudEventBundle\Model\Page;
 - use Beefeater\CrudEventBundle\Model\Sort;
 - use Beefeater\CrudEventBundle\Model\Filter;
+
+## 🔒 Security
+
+Security is **optional** and configured per resource and per operation.
+```yaml
+version: v1
+resources:
+  tournaments:
+    entity: App\Entity\Tournament
+    operations: [C, R, U, D, L, P]
+    path: /tournaments
+
+  categories:
+    entity: App\Entity\Category
+    operations: [C, R, U, D, L, P]
+    path: /tournaments/{tournament}/categories
+    params:
+      tournament: App\Entity\Tournament
+    security:
+      C: [ ROLE_USER ]
+      U: [ ROLE_USER, ROLE_ADMIN ]
+      D: [ ROLE_ADMIN ]
+```
+**Supported operations:**
+- `C` – Create
+- `R` – Read
+- `U` – Update
+- `D` – Delete
+- `L` – List
+- `P` – Patch
+> ⚠️ If the **`security:`** key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), security is ignored.
+>
+> ⚠️ Security roles must be defined **per operation** using arrays for **`C, R, U, D, L, P`**.  
+> Missing an operation means **public access** for that operation.
+>
+> ⚠️ Secured endpoints are marked with the **`_secured`** suffix in the route name, for example:  
+> **`api_v1_categories_C_secured`**
+>
+> ⚠️ Multiple roles per operation are supported.  
+> Access is **granted** if the user has **at least one matching role**.  
+> The order of user roles does **not** matter.
+>
+> ⚠️ The bundle fully respects **Symfony role hierarchy** (e.g. `ROLE_ADMIN` inherits `ROLE_USER`).
+>
+> ⚠️ Security requires the **`symfony/security-bundle`** to be installed.  
+> If it is missing, security will be ignored.

@@ -496,16 +496,33 @@ class CrudEventController extends AbstractController
     protected function checkSecurity(Request $request, string $operation): void
     {
         if ($this->security === null) {
+            $this->logger->warning("Security service is null for operation {$operation}");
             return;
         }
 
-        $roles = $request->attributes->get('_security', [])[$operation] ?? [];
-        foreach ($roles as $role) {
-            if (!$this->security->isGranted($role)) {
-                $this->logger->error("Access denied for operation {$operation}");
-                throw new AccessDeniedHttpException("Access denied for operation {$operation}");
-            }
-            $this->logger->info("Access confirmed for operation {$operation}");
+        $allRoles = $request->attributes->get('_security', []);
+        $rolesForOp = $allRoles[strtolower($operation)] ?? [];
+
+        if (empty($rolesForOp)) {
+            $this->logger->warning("No security roles defined for operation {$operation}, access granted");
+            return;
         }
+
+        $user = $this->security->getUser();
+        $this->logger->warning('User roles check', [
+            'user' => $user,
+            'operation' => $operation,
+            'operationRoles' => $rolesForOp,
+        ]);
+
+        foreach ($rolesForOp as $role) {
+            if ($this->security->isGranted($role)) {
+                $this->logger->info("Access confirmed for operation {$operation}");
+                return;
+            }
+        }
+
+        $this->logger->error("Access denied for operation {$operation}");
+        throw new AccessDeniedHttpException("Access denied for operation {$operation}");
     }
 }

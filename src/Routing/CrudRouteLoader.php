@@ -22,30 +22,50 @@ class CrudRouteLoader extends Loader
         $this->params = $params;
         $this->logger = $logger;
     }
+
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
         $resource = $this->params->resolveValue($resource);
         $routes = new RouteCollection();
         $config = Yaml::parseFile($resource);
         $version = $config['version'] ?? null;
+
         if (!isset($config['version'])) {
             $this->logger->warning("No version defined in route config file: {$resource}");
         }
 
-        foreach ($config['resources'] as $name => $data) {
+        foreach ($config['resources'] as $resourceName => $resourceData) {
             $securityRolesByEndpoints = [];
-            if (isset($config['security'])) {
-                $securityRolesByEndpoints = $this->securityRolesForOp($config['security']);
+            if (!empty($resourceData['security'])) {
+                $securityRolesByEndpoints = $this->securityRolesForOp($resourceData['security']);
                 $this->logger->warning("Security defined in route config file: {$resource}");
+                $this->logger->warning('Security roles by endpoints', [
+                    'resource' => $resourceName,
+                    'roles' => $securityRolesByEndpoints,
+                ]);
             }
-            foreach ($data['operations'] as $op) {
+
+            foreach ($resourceData['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
-                    $this->logger->error("Unsupported operation in resource '{$name}': '{$op}'");
+                    $this->logger->error("Unsupported operation in resource '{$resourceName}': '{$op}'");
+                    continue;
                 }
-                $routeName = "api_" . ($version ? "{$version}_" : "") . "{$name}_{$op}";
+
+                $routeName = 'api_'
+                    . ($version ? "{$version}_" : '')
+                    . "{$resourceName}_{$op}"
+                    . (isset($resourceData['security'][$op]) ? '_secured' : '');
+
                 $routes->add(
                     $routeName,
-                    $this->buildRoute($name, $data['entity'], $data['path'], $op, $version, $securityRolesByEndpoints)
+                    $this->buildRoute(
+                        $resourceName,
+                        $resourceData['entity'],
+                        $resourceData['path'],
+                        $op,
+                        $version,
+                        $securityRolesByEndpoints
+                    )
                 );
 
                 $this->logger->info("Adding route: {$routeName}");
@@ -56,12 +76,12 @@ class CrudRouteLoader extends Loader
     }
 
     private function buildRoute(
-        string $name,
+        string $resourceName,
         string $entity,
         string $basePath,
         string $op,
         ?string $version,
-        ?array $securityRolesByEndpoints
+        array $securityRolesByEndpoints
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -93,11 +113,11 @@ class CrudRouteLoader extends Loader
             '/api' . ($version ? "/$version" : '') . $path,
             [
                 '_controller' => CrudEventController::class . "::{$controllerMethodName}",
-                '_resource' => $name,
+                '_resource' => $resourceName,
                 '_entity' => $entity,
                 '_operation' => $op,
                 '_version' => $version,
-                '_security' => $securityRolesByEndpoints[$controllerMethodName] ?? [],
+                '_security' => $securityRolesByEndpoints,
             ],
             [],
             [],
@@ -120,27 +140,19 @@ class CrudRouteLoader extends Loader
                 $this->logger->error("Security roles array must be array");
                 throw new \InvalidArgumentException("Security roles for $operation must be array");
             }
-            switch ($operation) {
-                case 'C':
-                    $securityRolesByEndpoints['create'] = $rolesArray;
-                    break;
-                case 'R':
-                    $securityRolesByEndpoints['read'] = $rolesArray;
-                    break;
-                case 'U':
-                    $securityRolesByEndpoints['update'] = $rolesArray;
-                    break;
-                case 'D':
-                    $securityRolesByEndpoints['delete'] = $rolesArray;
-                    break;
-                case 'L':
-                    $securityRolesByEndpoints['list'] = $rolesArray;
-                    break;
-                case 'P':
-                    $securityRolesByEndpoints['patch'] = $rolesArray;
-                    break;
-            }
+
+            $key = match ($operation) {
+                'C' => 'create',
+                'R' => 'read',
+                'U' => 'update',
+                'D' => 'delete',
+                'L' => 'list',
+                'P' => 'patch',
+            };
+
+            $securityRolesByEndpoints[$key] = $rolesArray;
         }
+
         return $securityRolesByEndpoints;
     }
 
