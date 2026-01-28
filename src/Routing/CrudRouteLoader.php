@@ -45,6 +45,13 @@ class CrudRouteLoader extends Loader
                 ]);
             }
 
+            if (!empty($resourceData['quick-search'])) {
+                $this->logger->info('Quick-search defined in route config', [
+                    'resource' => $resourceName,
+                    'columns' => $resourceData['quick-search'],
+                ]);
+            }
+
             foreach ($resourceData['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
                     $this->logger->error("Unsupported operation in resource '{$resourceName}': '{$op}'");
@@ -64,7 +71,8 @@ class CrudRouteLoader extends Loader
                         $resourceData['path'],
                         $op,
                         $version,
-                        $securityRolesByEndpoints
+                        $securityRolesByEndpoints,
+                        $resourceData['quick-search'] ?? []
                     )
                 );
 
@@ -81,7 +89,8 @@ class CrudRouteLoader extends Loader
         string $basePath,
         string $op,
         ?string $version,
-        array $securityRolesByEndpoints
+        array $securityRolesByEndpoints,
+        array $quickSearchColumns = []
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -118,6 +127,7 @@ class CrudRouteLoader extends Loader
                 '_operation' => $op,
                 '_version' => $version,
                 '_security' => $securityRolesByEndpoints,
+                '_quick_search' => $quickSearchColumns,
             ],
             [],
             [],
