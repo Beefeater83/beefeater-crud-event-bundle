@@ -46,6 +46,14 @@ class CrudRouteLoader extends Loader
             }
 
             if (!empty($resourceData['quick-search'])) {
+                foreach ($resourceData['quick-search'] as $field) {
+                    if (!preg_match('/^[a-zA-Z0-9_.]+$/', $field)) {
+                        throw new \InvalidArgumentException(
+                            "Invalid quick-search field '{$field}' in resource '{$resourceName}'. " .
+                            "Letters, figures and dot are allowed only."
+                        );
+                    }
+                }
                 $this->logger->info('Quick-search defined in route config', [
                     'resource' => $resourceName,
                     'columns' => $resourceData['quick-search'],

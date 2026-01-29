@@ -11,6 +11,7 @@ class Filter
     public const FILTER_VALUE_NULL = 'none';
     public const FILTER_VALUE_TRUE = 'true';
     public const FILTER_VALUE_FALSE = 'false';
+    public const QUICK_SEARCH_KEY = '_quick_search';
 
     private array $criteria;
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Beefeater\CrudEventBundle\Repository;
 
 use Beefeater\CrudEventBundle\Exception\ResourceNotFoundException;
+use Beefeater\CrudEventBundle\Model\Filter;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
@@ -29,7 +30,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
     protected function applyCriteria(QueryBuilder $qb, array $criteria): void
     {
         foreach ($criteria as $field => $filters) {
-            if ($field === '_quick_search') {
+            if ($field === Filter::QUICK_SEARCH_KEY) {
                 $orX = $qb->expr()->orX();
 
                 foreach ($filters as $i => [$searchField, $value]) {

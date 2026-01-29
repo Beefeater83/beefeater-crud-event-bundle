@@ -35,7 +35,7 @@ class FilterArgumentResolver implements ValueResolverInterface
         $filter = new Filter($queryString);
 
         $quickSearch = $request->query->get('quickSearch');
-        $quickSearchFields = $request->attributes->get('_quick_search', []);
+        $quickSearchFields = $request->attributes->get(Filter::QUICK_SEARCH_KEY, []);
 
         if ($quickSearch && $quickSearchFields) {
             $qs = [];
@@ -44,7 +44,7 @@ class FilterArgumentResolver implements ValueResolverInterface
                 $qs[] = [$field, $quickSearch];
             }
 
-            $filter->setCriteria('_quick_search', $qs);
+            $filter->setCriteria(Filter::QUICK_SEARCH_KEY, $qs);
         }
 
         return [$filter];
