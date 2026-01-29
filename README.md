@@ -169,6 +169,47 @@ GET /api/v1/tournaments?filter[category][in][]=pro&filter[category][nin][]=amate
 
 ---
 
+### 🔎 Quick Search
+`QuickSearch` is an optional feature, enabled per resource via configuration and available only for the `list` operation.
+
+It can be used independently or together with `filter` and adds `LIKE %value%` search conditions.
+
+Configuration example:
+
+```yaml
+version: v1
+resources:
+  categories:
+    entity: App\Entity\Category
+    operations: [C, R, U, D, L, P]
+    path: /categories
+    quick-search: [name, parent.name]
+```
+Behaviour
+
+- Enabled explicitly per resource/controller
+- Searches across all configured fields
+- Fields are combined using `OR`
+- Combined with `filter` using `AND`
+- Uses `LIKE %value%` automatically
+
+Example
+```
+GET /api/v1/categories?filter[isActive]=true&quickSearch=junior
+```
+Equivalent query logic:
+```
+WHERE
+  category.is_active = true
+  AND (
+    category.name LIKE '%junior%'
+    OR 
+    parent.name LIKE '%junior%'
+  )
+```
+`quickSearch` supports both entity properties and related entity properties
+(using dot notation: `relation.property`).
+---
 ## 📦 Nested Resources
 
 If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v1/tournaments/{tournament}/categories`), it is:
