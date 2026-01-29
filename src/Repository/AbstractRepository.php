@@ -29,6 +29,18 @@ abstract class AbstractRepository extends ServiceEntityRepository
     protected function applyCriteria(QueryBuilder $qb, array $criteria): void
     {
         foreach ($criteria as $field => $filters) {
+            if ($field === '_quick_search') {
+                $orX = $qb->expr()->orX();
+
+                foreach ($filters as $i => [$searchField, $value]) {
+                    $param = "qs_$i";
+                    $orX->add("entity.$searchField LIKE :$param");
+                    $qb->setParameter($param, "%$value%");
+                }
+
+                $qb->andWhere($orX);
+                continue;
+            }
             foreach ($filters as $operator => $value) {
                 $paramName = $field . '_' . $operator;
                 $paramValue = $value;
