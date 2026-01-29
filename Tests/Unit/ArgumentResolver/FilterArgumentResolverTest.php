@@ -53,4 +53,55 @@ class FilterArgumentResolverTest extends TestCase
             $this->assertEquals($expectedCriteria, $filter->getCriteria());
         }
     }
+
+    public function testResolvesFilterArgumentWithQuickSearch(): void
+    {
+        $queryString = [
+            'filter' => [
+                'weight' => [
+                    'eq' => [
+                        0 => '65.00',
+                        1 => '75.00'
+                    ]
+                ],
+                'age' => [
+                    'gte' => [
+                        0 => '10',
+                    ]
+                ]
+            ]
+        ];
+
+        $request = new Request($queryString);
+        $request->query->set('quickSearch', 'verified');
+        $request->attributes->set('_quick_search', ['type', 'status']);
+
+        $argument = new ArgumentMetadata('filter', Filter::class, false, false, null);
+        $logger = $this->createMock(LoggerInterface::class);
+        $argumentResolver = new FilterArgumentResolver($logger);
+
+        $result = $argumentResolver->resolve($request, $argument);
+
+        foreach ($result as $filter) {
+            $this->assertInstanceOf(Filter::class, $filter);
+
+            $expectedCriteria = [
+                'weight' => [
+                    'eq' => [
+                        '65.00',
+                        '75.00'
+                    ]
+                ],
+                'age' => [
+                    'gte' => [10]
+                ],
+                '_quick_search' => [
+                    ['type', 'verified'],
+                    ['status', 'verified']
+                ]
+            ];
+
+            $this->assertEquals($expectedCriteria, $filter->getCriteria());
+        }
+    }
 }

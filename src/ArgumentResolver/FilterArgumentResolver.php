@@ -32,6 +32,21 @@ class FilterArgumentResolver implements ValueResolverInterface
             throw new BadRequestHttpException('The "filter" parameter must be an array IN RESOLVER.');
         }
 
-        return [new Filter($queryString)];
+        $filter = new Filter($queryString);
+
+        $quickSearch = $request->query->get('quickSearch');
+        $quickSearchFields = $request->attributes->get(Filter::QUICK_SEARCH_KEY, []);
+
+        if ($quickSearch && $quickSearchFields) {
+            $qs = [];
+
+            foreach ($quickSearchFields as $field) {
+                $qs[] = [$field, $quickSearch];
+            }
+
+            $filter->setCriteria(Filter::QUICK_SEARCH_KEY, $qs);
+        }
+
+        return [$filter];
     }
 }
