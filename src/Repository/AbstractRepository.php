@@ -32,10 +32,25 @@ abstract class AbstractRepository extends ServiceEntityRepository
         foreach ($criteria as $field => $filters) {
             if ($field === Filter::QUICK_SEARCH_KEY) {
                 $orX = $qb->expr()->orX();
+                $joins = [];
 
                 foreach ($filters as $i => [$searchField, $value]) {
                     $param = "qs_$i";
-                    $orX->add("entity.$searchField LIKE :$param");
+
+                    if (str_contains($searchField, '.')) {
+                        [$relation, $property] = explode('.', $searchField, 2);
+
+                        if (!isset($joins[$relation])) {
+                            $alias = $relation;
+                            $qb->leftJoin("entity.$relation", $alias);
+                            $joins[$relation] = $alias;
+                        }
+
+                        $orX->add(sprintf('%s.%s LIKE :%s', $joins[$relation], $property, $param));
+                    } else {
+                        $orX->add(sprintf('entity.%s LIKE :%s', $searchField, $param));
+                    }
+
                     $qb->setParameter($param, "%$value%");
                 }
 
