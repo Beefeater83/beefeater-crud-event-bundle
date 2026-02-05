@@ -60,6 +60,13 @@ class CrudRouteLoader extends Loader
                 ]);
             }
 
+            $export = $resourceData['export'] ?? [];
+            if (!is_array($export)) {
+                throw new \InvalidArgumentException(
+                    "Export config for resource '{$resourceName}' must be an array."
+                );
+            }
+
             foreach ($resourceData['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
                     $this->logger->error("Unsupported operation in resource '{$resourceName}': '{$op}'");
@@ -80,7 +87,8 @@ class CrudRouteLoader extends Loader
                         $op,
                         $version,
                         $securityRolesByEndpoints,
-                        $resourceData['quick-search'] ?? []
+                        $resourceData['quick-search'] ?? [],
+                        $export ?? []
                     )
                 );
 
@@ -98,7 +106,8 @@ class CrudRouteLoader extends Loader
         string $op,
         ?string $version,
         array $securityRolesByEndpoints,
-        array $quickSearchColumns = []
+        array $quickSearchColumns = [],
+        array $export = []
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -136,6 +145,7 @@ class CrudRouteLoader extends Loader
                 '_version' => $version,
                 '_security' => $securityRolesByEndpoints,
                 '_quick_search' => $quickSearchColumns,
+                '_export' => $export,
             ],
             [],
             [],

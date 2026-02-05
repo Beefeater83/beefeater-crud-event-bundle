@@ -18,6 +18,7 @@ use Beefeater\CrudEventBundle\Event\FilterBuildEvent;
 use Beefeater\CrudEventBundle\Event\ListSettings;
 use Beefeater\CrudEventBundle\Exception\PayloadValidationException;
 use Beefeater\CrudEventBundle\Exception\ResourceNotFoundException;
+use Beefeater\CrudEventBundle\Export\ExportManager;
 use Beefeater\CrudEventBundle\Model\Filter;
 use Beefeater\CrudEventBundle\Model\Page;
 use Beefeater\CrudEventBundle\Model\PaginatedResult;
@@ -43,6 +44,7 @@ class CrudEventController extends AbstractController
     private EventDispatcherInterface $dispatcher;
     private SerializerInterface $serializer;
     private LoggerInterface $logger;
+    private ExportManager $exportManager;
     private ?Security $security;
 
     public function __construct(
@@ -51,6 +53,7 @@ class CrudEventController extends AbstractController
         EventDispatcherInterface $dispatcher,
         SerializerInterface $serializer,
         LoggerInterface $logger,
+        ExportManager $exportManager,
         ?Security $security = null
     ) {
         $this->entityManager = $entityManager;
@@ -58,6 +61,7 @@ class CrudEventController extends AbstractController
         $this->dispatcher = $dispatcher;
         $this->serializer = $serializer;
         $this->logger = $logger;
+        $this->exportManager = $exportManager;
         $this->security = $security;
     }
 
@@ -424,6 +428,12 @@ class CrudEventController extends AbstractController
             $page->getPageSize(),
             $entityRepository->countByCriteria($criteria)
         );
+
+        $response = $this->exportManager->export($request, $paginatedResponse, $resourceName);
+        if ($response instanceof JsonResponse) {
+            return $response;
+        }
+
         return $this->json($paginatedResponse, Response::HTTP_OK);
     }
 
