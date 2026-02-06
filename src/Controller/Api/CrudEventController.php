@@ -18,7 +18,7 @@ use Beefeater\CrudEventBundle\Event\FilterBuildEvent;
 use Beefeater\CrudEventBundle\Event\ListSettings;
 use Beefeater\CrudEventBundle\Exception\PayloadValidationException;
 use Beefeater\CrudEventBundle\Exception\ResourceNotFoundException;
-use Beefeater\CrudEventBundle\Export\ExportManager;
+use Beefeater\CrudEventBundle\Export\ExcelExportManager;
 use Beefeater\CrudEventBundle\Model\Filter;
 use Beefeater\CrudEventBundle\Model\Page;
 use Beefeater\CrudEventBundle\Model\PaginatedResult;
@@ -44,7 +44,7 @@ class CrudEventController extends AbstractController
     private EventDispatcherInterface $dispatcher;
     private SerializerInterface $serializer;
     private LoggerInterface $logger;
-    private ExportManager $exportManager;
+    private ExcelExportManager $exportManager;
     private ?Security $security;
 
     public function __construct(
@@ -53,7 +53,7 @@ class CrudEventController extends AbstractController
         EventDispatcherInterface $dispatcher,
         SerializerInterface $serializer,
         LoggerInterface $logger,
-        ExportManager $exportManager,
+        ExcelExportManager $exportManager,
         ?Security $security = null
     ) {
         $this->entityManager = $entityManager;
@@ -384,7 +384,7 @@ class CrudEventController extends AbstractController
         return new JsonResponse(['message' => 'Entity deleted'], JsonResponse::HTTP_NO_CONTENT);
     }
 
-    public function list(Request $request, Page $page, Sort $sort, Filter $filter): JsonResponse
+    public function list(Request $request, Page $page, Sort $sort, Filter $filter): Response
     {
         $this->checkSecurity($request, 'list');
         $resourceName = $request->attributes->get('_resource');
@@ -403,7 +403,7 @@ class CrudEventController extends AbstractController
         Sort $sort,
         Filter $filter,
         string $resourceName
-    ): JsonResponse {
+    ): Response {
 
         $this->logger->info('List requested', [
             'resource' => $resourceName,
@@ -430,7 +430,7 @@ class CrudEventController extends AbstractController
         );
 
         $response = $this->exportManager->export($request, $paginatedResponse, $resourceName);
-        if ($response instanceof JsonResponse) {
+        if ($response instanceof Response) {
             return $response;
         }
 

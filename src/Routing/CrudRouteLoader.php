@@ -60,12 +60,7 @@ class CrudRouteLoader extends Loader
                 ]);
             }
 
-            $export = $resourceData['export'] ?? [];
-            if (!is_array($export)) {
-                throw new \InvalidArgumentException(
-                    "Export config for resource '{$resourceName}' must be an array."
-                );
-            }
+            $export = $resourceData['export'] ?? false;
 
             foreach ($resourceData['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
@@ -88,7 +83,7 @@ class CrudRouteLoader extends Loader
                         $version,
                         $securityRolesByEndpoints,
                         $resourceData['quick-search'] ?? [],
-                        $export ?? []
+                        $export ?? false
                     )
                 );
 
@@ -107,7 +102,7 @@ class CrudRouteLoader extends Loader
         ?string $version,
         array $securityRolesByEndpoints,
         array $quickSearchColumns = [],
-        array $export = []
+        bool $export = false
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
