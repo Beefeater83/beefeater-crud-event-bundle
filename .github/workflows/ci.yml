@@ -30,7 +30,7 @@ jobs:
         with:
           working_dir: .
           #php_extensions: gd
-          args: --ignore-platform-req=ext-gd # Try to ignore, since it is expensive to build
+          args: --ignore-platform-req=ext-gd  --ignore-platform-req=ext-zip # Try to ignore, since it is expensive to build
       -
         name: run tests
         working-directory: .
