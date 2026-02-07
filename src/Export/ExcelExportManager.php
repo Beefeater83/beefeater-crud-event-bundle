@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace Beefeater\CrudEventBundle\Export;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\SerializerInterface;
 use Beefeater\CrudEventBundle\Model\PaginatedResult;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExcelExportManager
 {
-    public function export(
-        Request $request,
-        PaginatedResult $result,
-        string $resourceName
-    ): ?Response {
+    private SerializerInterface $serializer;
+
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+    }
+
+    public function export(Request $request, PaginatedResult $paginatedResult, string $resourceName): ?Response
+    {
         if ($request->attributes->get('_operation') !== 'L') {
             return null;
         }
@@ -26,79 +31,125 @@ class ExcelExportManager
             return null;
         }
 
-        $contentType = $request->headers->get('Content-Type');
-        if ($contentType !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        $contentTypeHeader = $request->headers->get('Content-Type');
+        if ($contentTypeHeader !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             return null;
         }
 
-        $items = $result->getItems();
-        if (empty($items)) {
-            throw new \RuntimeException('No items to export.');
+        $fileName = sprintf('%s.%s.xlsx', (new \DateTime())->format('Y-m-d'), $resourceName);
+
+        $itemsForExport = $paginatedResult->getItems();
+        if (empty($itemsForExport)) {
+            throw new \RuntimeException('Data not found');
         }
 
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $activeSheet = $spreadsheet->getActiveSheet();
 
-        $columns = [];
-        $firstRow = true;
-        $rowIndex = 2;
-
-        foreach ($items as $item) {
-            if ($firstRow) {
-                $colIndex = 1;
-                foreach ($item as $key => $value) {
-                    $columns[] = $key;
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . '1', $key);
-                    $colIndex++;
-                }
-                $firstRow = false;
-            }
-            $colIndex = 1;
-            foreach ($columns as $colName) {
-                $value = $item[$colName] ?? null;
-
-                if (is_scalar($value) || is_null($value)) {
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $rowIndex, $value);
-                } elseif (is_array($value)) {
-                    if (isset($value['id'])) {
-                        $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $rowIndex, $value['id']);
-                    } else {
-                        $ids = [];
-                        foreach ($value as $v) {
-                            if (is_array($v) && isset($v['id'])) {
-                                $ids[] = $v['id'];
-                            }
-                        }
-                        $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $rowIndex, implode(',', $ids));
-                    }
-                } else {
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $rowIndex, '');
-                }
-
-                $colIndex++;
-            }
-
-            $rowIndex++;
+        $serializedItemsAsArrays = [];
+        foreach ($itemsForExport as $entityObject) {
+            $serializedItemsAsArrays[] = $this->serializer->normalize($entityObject);
         }
 
-        $filename = sprintf(
-            '%s.%s.xlsx',
-            (new \DateTime())->format('Y-m-d'),
-            $resourceName
-        );
+        $allRowsForExcel = [];
+        foreach ($serializedItemsAsArrays as $serializedItem) {
+            $rowsFromItem = $this->convertItemToRows($serializedItem);
+            $allRowsForExcel = array_merge($allRowsForExcel, $rowsFromItem);
+        }
 
-        $writer = new Xlsx($spreadsheet);
+        $columnHeaders = [];
+        $isHeaderRowWritten = false;
+        $rowIndexForExcel = 2;
+
+        foreach ($allRowsForExcel as $excelRowData) {
+            if (!$isHeaderRowWritten) {
+                $columnIndexForExcel = 1;
+                foreach ($excelRowData as $columnKey => $columnValue) {
+                    $columnHeaders[] = $columnKey;
+                    $cellCoordinate = Coordinate::stringFromColumnIndex($columnIndexForExcel) . '1';
+                    $activeSheet->setCellValue($cellCoordinate, $columnKey);
+                    $activeSheet->getStyle($cellCoordinate)->getFont()->setBold(true);
+                    $activeSheet->getColumnDimension(Coordinate::stringFromColumnIndex($columnIndexForExcel))
+                        ->setAutoSize(true);
+                    $columnIndexForExcel++;
+                }
+                $isHeaderRowWritten = true;
+            }
+
+            $columnIndexForExcel = 1;
+            foreach ($columnHeaders as $columnKey) {
+                $cellValue = $excelRowData[$columnKey] ?? null;
+                $activeSheet->setCellValue(
+                    Coordinate::stringFromColumnIndex($columnIndexForExcel)
+                    . $rowIndexForExcel,
+                    $cellValue
+                );
+                $columnIndexForExcel++;
+            }
+
+            $rowIndexForExcel++;
+        }
+
+        $excelWriter = new Xlsx($spreadsheet);
         ob_start();
-        $writer->save('php://output');
-        $excelContent = ob_get_clean();
+        $excelWriter->save('php://output');
+        $excelBinaryContent = ob_get_clean();
 
         return new Response(
-            $excelContent,
+            $excelBinaryContent,
             Response::HTTP_OK,
             [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $fileName),
             ]
         );
+    }
+
+    private function convertItemToRows(array $array): array
+    {
+        $rowsForCurrentElement = [];
+        $baseDataForCurrentElement = [];
+
+        foreach ($array as $fieldName => $fieldValue) {
+            if (!is_array($fieldValue)) {
+                $baseDataForCurrentElement[$fieldName] = $fieldValue;
+                continue;
+            }
+
+            if ($this->isAssociativeArray($fieldValue)) {
+                foreach ($fieldValue as $subFieldName => $subFieldValue) {
+                    $baseDataForCurrentElement[$fieldName . '_' . $subFieldName] = $subFieldValue;
+                }
+                continue;
+            }
+
+            $rowsFromNestedArray = [];
+            foreach ($fieldValue as $nestedObject) {
+                $rowForNestedObject = $baseDataForCurrentElement;
+                foreach ($nestedObject as $nestedFieldName => $nestedFieldValue) {
+                    $rowForNestedObject[$fieldName . '_' . $nestedFieldName] = $nestedFieldValue;
+                }
+                $rowsFromNestedArray[] = $rowForNestedObject;
+            }
+
+            if (!empty($rowsFromNestedArray)) {
+                $rowsForCurrentElement = array_merge($rowsForCurrentElement, $rowsFromNestedArray);
+            }
+        }
+
+        if (empty($rowsForCurrentElement)) {
+            $rowsForCurrentElement[] = $baseDataForCurrentElement;
+        } else {
+            foreach ($rowsForCurrentElement as &$row) {
+                $row = array_merge($baseDataForCurrentElement, $row);
+            }
+        }
+
+        return $rowsForCurrentElement;
+    }
+
+    private function isAssociativeArray(array $array): bool
+    {
+        return array_keys($array) !== range(0, count($array) - 1);
     }
 }
