@@ -429,9 +429,11 @@ class CrudEventController extends AbstractController
             $entityRepository->countByCriteria($criteria)
         );
 
-        $response = $this->exportManager->export($request, $paginatedResponse, $resourceName);
-        if ($response instanceof Response) {
-            return $response;
+        if ($request->attributes->get('_export', false)) {
+            $response = $this->exportManager->export($request, $paginatedResponse, $resourceName);
+            if ($response instanceof Response) {
+                return $response;
+            }
         }
 
         return $this->json($paginatedResponse, Response::HTTP_OK);

@@ -27,10 +27,6 @@ class ExcelExportManager
             return null;
         }
 
-        if (!$request->attributes->get('_export', false)) {
-            return null;
-        }
-
         $contentTypeHeader = $request->headers->get('Content-Type');
         if ($contentTypeHeader !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             return null;
@@ -39,9 +35,6 @@ class ExcelExportManager
         $fileName = sprintf('%s.%s.xlsx', (new \DateTime())->format('Y-m-d'), $resourceName);
 
         $itemsForExport = $paginatedResult->getItems();
-        if (empty($itemsForExport)) {
-            throw new \RuntimeException('Data not found');
-        }
 
         $spreadsheet = new Spreadsheet();
         $activeSheet = $spreadsheet->getActiveSheet();
