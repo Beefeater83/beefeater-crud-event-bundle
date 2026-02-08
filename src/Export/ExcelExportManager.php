@@ -35,7 +35,6 @@ class ExcelExportManager
         $fileName = sprintf('%s.%s.xlsx', (new \DateTime())->format('Y-m-d'), $resourceName);
 
         $itemsForExport = $paginatedResult->getItems();
-
         $spreadsheet = new Spreadsheet();
         $activeSheet = $spreadsheet->getActiveSheet();
 
