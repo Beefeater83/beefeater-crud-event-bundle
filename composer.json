@@ -33,7 +33,8 @@
     "doctrine/orm": "^3.0",
     "doctrine/doctrine-bundle": "^2.10",
     "doctrine/persistence": "^3.3",
-    "symfony/uid": "^7.2"
+    "symfony/uid": "^7.2",
+    "phpoffice/phpspreadsheet": "^5.4"
   },
   "require-dev": {
     "phpunit/phpunit": "^12.2",

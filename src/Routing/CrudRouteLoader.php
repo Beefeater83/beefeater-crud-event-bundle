@@ -60,6 +60,8 @@ class CrudRouteLoader extends Loader
                 ]);
             }
 
+            $export = $resourceData['export'] ?? false;
+
             foreach ($resourceData['operations'] as $op) {
                 if (!in_array($op, ['C', 'R', 'U', 'D', 'L', 'P'], true)) {
                     $this->logger->error("Unsupported operation in resource '{$resourceName}': '{$op}'");
@@ -80,7 +82,8 @@ class CrudRouteLoader extends Loader
                         $op,
                         $version,
                         $securityRolesByEndpoints,
-                        $resourceData['quick-search'] ?? []
+                        $resourceData['quick-search'] ?? [],
+                        $export ?? false
                     )
                 );
 
@@ -98,7 +101,8 @@ class CrudRouteLoader extends Loader
         string $op,
         ?string $version,
         array $securityRolesByEndpoints,
-        array $quickSearchColumns = []
+        array $quickSearchColumns = [],
+        bool $export = false
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -136,6 +140,7 @@ class CrudRouteLoader extends Loader
                 '_version' => $version,
                 '_security' => $securityRolesByEndpoints,
                 '_quick_search' => $quickSearchColumns,
+                '_export' => $export,
             ],
             [],
             [],
