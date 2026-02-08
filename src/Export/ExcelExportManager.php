@@ -27,7 +27,7 @@ class ExcelExportManager
             return null;
         }
 
-        $contentTypeHeader = $request->headers->get('Content-Type');
+        $contentTypeHeader = $request->headers->get('Accept');
         if ($contentTypeHeader !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             return null;
         }
