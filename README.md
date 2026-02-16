@@ -436,12 +436,12 @@ blog_list:
     path: /blog/{page}/{uuid}/{slug}
     controller: App\Controller\BlogController::list
     requirements:
-        page: '\d+'                       # numeric
-        uuid: '[0-9a-fA-F\-]{36}'          # UUID
-        slug: '[a-zA-Z0-9\-]+'             # text
+      page: !php/const Symfony\Component\Routing\Requirement\Requirement::DIGITS       # numeric
+      uuid: !php/const Symfony\Component\Routing\Requirement\Requirement::UUID        # UUID
+      slug: '[a-zA-Z0-9\-]+'                                                     # text
 ```
 - **`requirements`** must be an array
 - Keys must match route parameter names
-- Values are regular expressions
+- Values are Symfony constants or regular expressions
 - If validation fails, the bundle returns **404 Not Found**
 - If not defined, no validation is applied

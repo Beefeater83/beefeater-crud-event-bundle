@@ -27,7 +27,7 @@ class CrudRouteLoader extends Loader
     {
         $resource = $this->params->resolveValue($resource);
         $routes = new RouteCollection();
-        $config = Yaml::parseFile($resource);
+        $config = Yaml::parseFile($resource, Yaml::PARSE_CONSTANT);
         $version = $config['version'] ?? null;
 
         if (!isset($config['version'])) {
