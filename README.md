@@ -393,3 +393,65 @@ resources:
 >
 > ⚠️ Security requires the **`symfony/security-bundle`** to be installed.  
 > If it is missing, security will be ignored.
+
+## 📤 Excel Export (Optional)
+Export is enabled via the **`export`** option in resource configuration:
+```yaml
+resources:
+    blog:
+        entity: App\Entity\Blog
+        operations: [L]
+        export: true
+```
+If enabled, a list request (**`L`** operation) will return an Excel file when the client sends:
+```yaml
+Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+```
+**How it works**
+
+- Export is available only for the list operation
+
+- Data is taken from the paginated result
+
+- Entities are normalized via Symfony Serializer
+
+- The Excel file is generated dynamically (**`.xlsx`**)
+
+**Supported data types**
+
+*The exporter includes:*
+
+- ✅ Scalar fields (string, int, float, bool, datetime)
+
+- ✅ Nested objects (flattened as parent_child)
+
+- ✅ Arrays of objects (each element becomes a separate row)
+
+*Not supported:*
+
+- ❌ Deep nested objects inside nested objects
+
+- ❌ Complex multi-level array structures
+
+If export is not enabled or the **`Accept`** header is different, a standard JSON response is returned.
+
+## ⚙️ Route Parameters Validation (Optional)
+Route parameters can be validated using the **`requirements`** option (similar to standard Symfony routing):
+```yaml
+blog_list:
+    path: /blog/{page}/{uuid}/{slug}
+    controller: App\Controller\BlogController::list
+    requirements:
+        page: '\d+'                       # numeric
+        uuid: '[0-9a-fA-F\-]{36}'          # UUID
+        slug: '[a-zA-Z0-9\-]+'             # text
+```
+- **`requirements`** must be an array
+
+- Keys must match route parameter names
+
+- Values are regular expressions
+
+- If validation fails, the bundle returns **404 Not Found**
+
+- If not defined, no validation is applied

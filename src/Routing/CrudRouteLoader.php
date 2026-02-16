@@ -83,7 +83,8 @@ class CrudRouteLoader extends Loader
                         $version,
                         $securityRolesByEndpoints,
                         $resourceData['quick-search'] ?? [],
-                        $export ?? false
+                        $export ?? false,
+                        $resourceData['requirements'] ?? []
                     )
                 );
 
@@ -102,7 +103,8 @@ class CrudRouteLoader extends Loader
         ?string $version,
         array $securityRolesByEndpoints,
         array $quickSearchColumns = [],
-        bool $export = false
+        bool $export = false,
+        array $requirements = []
     ): Route {
         $methods = match ($op) {
             'C' => ['POST'],
@@ -140,9 +142,9 @@ class CrudRouteLoader extends Loader
                 '_version' => $version,
                 '_security' => $securityRolesByEndpoints,
                 '_quick_search' => $quickSearchColumns,
-                '_export' => $export,
+                '_export' => $export
             ],
-            [],
+            $requirements,
             [],
             '',
             [],

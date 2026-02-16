@@ -146,7 +146,6 @@ class CrudEventController extends AbstractController
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $this->checkSecurity($request, 'update');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -224,7 +223,6 @@ class CrudEventController extends AbstractController
 
     public function patch(Request $request, string $id): JsonResponse
     {
-        $this->checkSecurity($request, 'patch');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
