@@ -452,6 +452,6 @@ blog_list:
 
 - Values are regular expressions
 
-- If validation fails, the bundle returns **400 Bad Request**
+- If validation fails, the bundle returns **404 Not Found**
 
 - If not defined, no validation is applied

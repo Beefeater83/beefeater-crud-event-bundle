@@ -146,7 +146,6 @@ class CrudEventController extends AbstractController
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $this->checkSecurity($request, 'update');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -167,7 +166,6 @@ class CrudEventController extends AbstractController
         string $id,
         ?string $version = null
     ): JsonResponse {
-        $this->validateRouteParams($request);
         $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
@@ -225,7 +223,6 @@ class CrudEventController extends AbstractController
 
     public function patch(Request $request, string $id): JsonResponse
     {
-        $this->checkSecurity($request, 'patch');
         $entityClass = $this->getEntityClass($request);
         $version = $request->attributes->get('_version');
         $resourceName = $request->attributes->get('_resource');
@@ -246,7 +243,6 @@ class CrudEventController extends AbstractController
         string $id,
         ?string $version = null,
     ): JsonResponse {
-        $this->validateRouteParams($request);
         $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
@@ -303,7 +299,6 @@ class CrudEventController extends AbstractController
 
     public function read(Request $request, string $id): JsonResponse
     {
-        $this->validateRouteParams($request);
         $this->checkSecurity($request, 'read');
         $entity = $this->findEntity($request, $id);
         $this->logger->info('Entity read', ['id' => $id, 'class' => get_class($entity)]);
@@ -333,7 +328,6 @@ class CrudEventController extends AbstractController
         string $id,
         ?string $version = null
     ): JsonResponse {
-        $this->validateRouteParams($request);
         $request->attributes->set('_entity', $entityClass);
         $entity = $this->findEntity($request, $id);
         $params = ['id' => $id];
@@ -540,19 +534,5 @@ class CrudEventController extends AbstractController
 
         $this->logger->error("Access denied for operation {$operation}");
         throw new AccessDeniedHttpException("Access denied for operation {$operation}");
-    }
-
-    protected function validateRouteParams(Request $request): void
-    {
-        $requirements = $request->attributes->get('_requirements', []);
-
-        foreach ($requirements as $param => $regex) {
-            $value = $request->get($param);
-            if ($value !== null && !preg_match('/^' . $regex . '$/', (string)$value)) {
-                throw new BadRequestHttpException(
-                    sprintf('Invalid value for parameter "%s": "%s"', $param, $value)
-                );
-            }
-        }
     }
 }

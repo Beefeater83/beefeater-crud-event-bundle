@@ -142,10 +142,9 @@ class CrudRouteLoader extends Loader
                 '_version' => $version,
                 '_security' => $securityRolesByEndpoints,
                 '_quick_search' => $quickSearchColumns,
-                '_export' => $export,
-                '_requirements' => $requirements
+                '_export' => $export
             ],
-            [],
+            $requirements,
             [],
             '',
             [],
