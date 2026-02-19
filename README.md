@@ -10,12 +10,15 @@
 - 🔁 Auto-generation of CRUD routes (`Create`, `Read`, `Update`, `Delete`, `List`, `Patch`) based on YAML configuration  
 - 📚 API versioning support (e.g., `v1`, `v2`)  
 - 📄 Pagination, sorting, and filtering for `List` operations  
-- 🧩 `before` and `after` events for `persist`, `update`, `delete`, `patch`, and `list`  
-- ⚙️ Extensible via custom `EventListeners` (e.g., for logging, notifications, etc.)  
-- ✅ Symfony Validator integration for request data validation  
-- 🧠 Built-in support for Doctrine ORM  
-- ✂️ Partial updates via `PATCH`  
-- 🔀 Route parameters support including nested resources and UUIDs  
+- 🧩 Event-driven architecture (before/after lifecycle events) 
+- ⚙️ Controller extensibility (custom endpoints + reusable handlers) 
+- 🔐 Per-operation security configuration
+- 🧠 Doctrine ORM integration
+- 📤 Optional Excel export for list operations
+- 🧾 Validation groups & request data validation
+- 🔀 Route parameters support including nested resources and UUIDs
+- 📝 Dedicated logging channel support
+- ❗ Custom exception handling
 
 ---
 
@@ -48,40 +51,40 @@ crud_api_v1:
 ```yaml
 version: v1
 resources:
-  tournaments:
-    entity: App\Entity\Tournament
+  products:
+    entity: App\Entity\Product
     operations: [C, R, U, D, L, P]
-    path: /tournaments
+    path: /products
 
   categories:
     entity: App\Entity\Category
     operations: [C, R, U, D, L, P]
-    path: /tournaments/{tournament}/categories
+    path: /products/{product}/categories
     params:
-      tournament: App\Entity\Tournament
+      product: App\Entity\Product
 ```
 
-#### Routes generated for `tournaments`:
+#### Routes generated for `products`:
 
-| Route Name           | Method | Path                     |
-|----------------------|--------|--------------------------|
-| api_v1_tournaments_C | POST   | /api/v1/tournaments      |
-| api_v1_tournaments_R | GET    | /api/v1/tournaments/{id} |
-| api_v1_tournaments_U | PUT    | /api/v1/tournaments/{id} |
-| api_v1_tournaments_D | DELETE | /api/v1/tournaments/{id} |
-| api_v1_tournaments_L | GET    | /api/v1/tournaments      |
-| api_v1_tournaments_P | PATCH  | /api/v1/tournaments/{id} |
+| Route Name         | Method | Path                  |
+|--------------------|--------|-----------------------|
+| api_v1_products_C  | POST   | /api/v1/products      |
+| api_v1_products_R  | GET    | /api/v1/products/{id} |
+| api_v1_products_U  | PUT    | /api/v1/products/{id} |
+| api_v1_products_D  | DELETE | /api/v1/products/{id} |
+| api_v1_products_L  | GET    | /api/v1/products      |
+| api_v1_products_P  | PATCH  | /api/v1/products/{id} |
 
 #### Routes generated for `categories`:
 
-| Route Name          | Method | Path                                             |
-|---------------------|--------|--------------------------------------------------|
-| api_v1_categories_C | POST   | /api/v1/tournaments/{tournament}/categories      |
-| api_v1_categories_R | GET    | /api/v1/tournaments/{tournament}/categories/{id} |
-| api_v1_categories_U | PUT    | /api/v1/tournaments/{tournament}/categories/{id} |
-| api_v1_categories_D | DELETE | /api/v1/tournaments/{tournament}/categories/{id} |
-| api_v1_categories_L | GET    | /api/v1/tournaments/{tournament}/categories      |
-| api_v1_categories_P | PATCH  | /api/v1/tournaments/{tournament}/categories/{id} |
+| Route Name          | Method | Path                                       |
+|---------------------|--------|--------------------------------------------|
+| api_v1_categories_C | POST   | /api/v1/products/{product}/categories      |
+| api_v1_categories_R | GET    | /api/v1/products/{product}/categories/{id} |
+| api_v1_categories_U | PUT    | /api/v1/products/{product}/categories/{id} |
+| api_v1_categories_D | DELETE | /api/v1/products/{product}/categories/{id} |
+| api_v1_categories_L | GET    | /api/v1/products/{product}/categories      |
+| api_v1_categories_P | PATCH  | /api/v1/products/{product}/categories/{id} |
 
 > ⚠️ If the ***`version:`*** key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
 ---
@@ -127,7 +130,7 @@ You can register event listeners to:
 
 Example:
 ```
-GET /api/v1/tournaments?page=2&pageSize=10
+GET /api/v1/products?page=2&pageSize=10
 ```
 
 ### 🔃 Sorting
@@ -135,7 +138,7 @@ GET /api/v1/tournaments?page=2&pageSize=10
 - `sort=+field1,-field2` — ascending/descending  
 - Example:
 ```
-GET /api/v1/tournaments?sort=-age,+name
+GET /api/v1/products?sort=-age,+name
 ```
 
 ### 🧰 Filtering
@@ -161,10 +164,10 @@ Boolean values supported: `true`, `false`, `none`
 Examples:
 
 ```http
-GET /api/v1/tournaments?filter[isActive]=true
-GET /api/v1/tournaments?filter[status][eq]=active
-GET /api/v1/tournaments?filter[rating][gte]=3&filter[rating][lte]=5
-GET /api/v1/tournaments?filter[category][in][]=pro&filter[category][nin][]=amateur
+GET /api/v1/products?filter[isActive]=true
+GET /api/v1/products?filter[status][eq]=active
+GET /api/v1/products?filter[price][gte]=10&filter[price][lte]=50
+GET /api/v1/products?filter[category][in][]=Category1&filter[category][nin][]=Category2
 ```
 
 ---
@@ -195,16 +198,16 @@ Behaviour
 
 Example
 ```
-GET /api/v1/categories?filter[isActive]=true&quickSearch=junior
+GET /api/v1/categories?filter[isActive]=true&quickSearch=Example
 ```
 Equivalent query logic:
 ```
 WHERE
   category.is_active = true
   AND (
-    category.name LIKE '%junior%'
+    category.name LIKE '%Example%'
     OR 
-    parent.name LIKE '%junior%'
+    parent.name LIKE '%Example%'
   )
 ```
 `quickSearch` supports both entity properties and related entity properties
@@ -212,7 +215,7 @@ WHERE
 ---
 ## 📦 Nested Resources
 
-If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v1/tournaments/{tournament}/categories`), it is:
+If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v1/products/{product}/categories`), it is:
 
 - Automatically resolved and injected
 - Available for filtering
@@ -220,7 +223,7 @@ If a parent ID (e.g., UUID) is present in the path (e.g., `/api/v1/tournaments/{
 You can combine all parameters:
 
 ```
-GET /api/v1/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+name&filter[rating][gte]=3&filter[rating][lte]=5
+GET /api/v1/products/{product}/categories?page=2&pageSize=10&sort=-name,+createdAt&filter[price][gte]=10&filter[price][lte]=50&filter[isAvailable]=true
 ```
 
 ---
@@ -267,9 +270,9 @@ GET /api/v1/tournaments/{tournament}/categories?page=2&pageSize=10&sort=-age,+na
 ### 🔔 Example Event Listener Registration
 
 ```yaml
-App\EventListener\TournamentCrudListener:
+App\EventListener\ProductCrudListener:
     tags:
-        - { name: kernel.event_listener, event: 'tournaments.create.after_persist', method: onAfterPersist }
+        - { name: kernel.event_listener, event: 'products.create.after_persist', method: onAfterPersist }
 ```
 
 ---
@@ -354,17 +357,17 @@ Security is **optional** and configured per resource and per operation.
 ```yaml
 version: v1
 resources:
-  tournaments:
-    entity: App\Entity\Tournament
+  products:
+    entity: App\Entity\Product
     operations: [C, R, U, D, L, P]
-    path: /tournaments
+    path: /products
 
   categories:
     entity: App\Entity\Category
     operations: [C, R, U, D, L, P]
-    path: /tournaments/{tournament}/categories
+    path: /products/{product}/categories
     params:
-      tournament: App\Entity\Tournament
+      product: App\Entity\Product
     security:
       C: [ ROLE_USER ]
       U: [ ROLE_USER, ROLE_ADMIN ]
