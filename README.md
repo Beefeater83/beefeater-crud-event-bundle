@@ -89,6 +89,36 @@ resources:
 > ⚠️ If the ***`version:`*** key is **not specified** in the configuration file (e.g. `crud_routes_v1.yaml`), the route paths will be built **without any version prefix**, for example: `/api/categories/{id}`.
 ---
 
+## 🗂 Repository Requirement
+
+All Doctrine repositories **must extend the bundle’s** `AbstractRepository` to ensure proper:
+
+- Filtering & QuickSearch
+- Pagination & Sorting
+- UUID handling
+- `find()` throws `ResourceNotFoundException`
+
+
+  **Example**
+```php
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Product;
+use Beefeater\CrudEventBundle\Repository\AbstractRepository as BundleAbstractRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+class ProductRepository extends BundleAbstractRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Product::class);
+    }
+}
+```
+You can rename the alias if you like; the important part is extending the bundle’s repository.
+
 ## 📘 How It Works
 
 - Routes are auto-generated from YAML config and handled by a central `CrudEventController`
