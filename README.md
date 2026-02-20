@@ -19,12 +19,18 @@
 - 🔀 Route parameters support including nested resources and UUIDs
 - 📝 Dedicated logging channel support
 - ❗ Custom exception handling
-
 ---
 
+## Requirements
+- PHP >= 8.1
+- Symfony >= 7.2 (compatible with 6.x and 7.x)
+- Doctrine ORM >= 3.0 (compatible with 2.x–4.x)
+- Doctrine Persistence >= 3.3 (compatible with 2.x–4.x)
+- PHPSpreadsheet >= 5.4
+
+> The bundle has been tested with these versions. Newer versions should also work.
+
 ## 🔧 Installation
-
-
 
 Install the bundle via Composer:
 
