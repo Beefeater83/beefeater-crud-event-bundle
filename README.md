@@ -23,10 +23,9 @@
 
 ## Requirements
 - PHP >= 8.1
-- Symfony >= 7.2 (compatible with 6.x and 7.x)
-- Doctrine ORM >= 3.0 (compatible with 2.x–4.x)
-- Doctrine Persistence >= 3.3 (compatible with 2.x–4.x)
-- PHPSpreadsheet >= 5.4
+- Symfony >= 7.2
+- Doctrine ORM >= 3.0
+- Doctrine Persistence >= 3.3
 
 > The bundle has been tested with these versions. Newer versions should also work.
 
@@ -325,23 +324,17 @@ You can register listeners to handle these exceptions globally.
 
 ## 📝 Logging
 
-The Beefeater CRUD Event Bundle supports logging of key operations such as:
+The Beefeater CRUD Event Bundle logs key operations such as:
 
 - Route creation
-- Error logging
-- Warning logging
+- Errors
+- Warnings
 
-### How to Enable Logging in Your Project
+### Configuration
 
-To enable logging for this bundle, follow these steps:
+The bundle uses a dedicated `crud_event` logging channel.
 
-1. Install the Symfony Monolog Bundle if you haven’t already:
-
-```bash
-composer require symfony/monolog-bundle
-```
-
-2. Configure a dedicated logging channel and handler for `crud_event` in your `config/packages/monolog.yaml` file. For example, in the `dev` environment:
+Add the channel to your `config/packages/monolog.yaml`:
 
 ```yaml
 monolog:
@@ -358,7 +351,7 @@ when@dev:
                 channels: ["crud_event"]
 ```
 
-3. You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/crud_event_test.log`.
+You can similarly add configurations for `when@test` just change log file path `%kernel.logs_dir%/crud_event_test.log`.
    For the `when@prod` environment, it's recommended to keep the default logging setup using the `fingers_crossed` handler
 
 ---
