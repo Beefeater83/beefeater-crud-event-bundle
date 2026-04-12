@@ -31,6 +31,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -521,6 +522,11 @@ class CrudEventController extends AbstractController
         }
 
         $user = $this->security->getUser();
+
+        if (!$user) {
+            $this->logger->warning("Unauthorized access attempt for operation {$operation}");
+            throw new HttpException(401, 'Authentication required');
+        }
         $this->logger->warning('User roles check', [
             'user' => $user,
             'operation' => $operation,
