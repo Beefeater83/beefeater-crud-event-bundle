@@ -71,6 +71,7 @@ class ExcelExportManager
             $columnIndexForExcel = 1;
             foreach ($columnHeaders as $columnKey) {
                 $cellValue = $excelRowData[$columnKey] ?? null;
+                $cellValue = is_array($cellValue) ? implode(', ', $cellValue) : (string)$cellValue;
                 $activeSheet->setCellValue(
                     Coordinate::stringFromColumnIndex($columnIndexForExcel)
                     . $rowIndexForExcel,
