@@ -356,10 +356,8 @@ class CrudEventController extends AbstractController
             $version
         ), 'crud_event.delete.before_remove');
 
-        $entityClass = $this->getEntityClass($request);
-        $tableName = $this->entityManager->getClassMetadata($entityClass)->getTableName();
-
-        $this->entityManager->getConnection()->delete($tableName, ['id' => $id]);
+        $this->entityManager->remove($entity);
+        $this->entityManager->flush();
 
         $this->dispatcher->dispatch(new CrudAfterEntityDelete(
             $entity,
